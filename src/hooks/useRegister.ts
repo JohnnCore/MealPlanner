@@ -17,29 +17,30 @@ export function useRegister() {
   async function onSubmit(values: RegisterFormValues) {
     setServerError(null);
 
-    const result = await registerAction(values);
+    try {
+      const result = await registerAction(values);
 
-    if ('error' in result) {
-      setServerError(result.error);
-      return;
+      if ('error' in result) {
+        setServerError(result.error);
+        return;
+      }
+
+      // Auto login after register
+      const signInRes = await signIn('credentials', {
+        redirect: false,
+        email: values.email,
+        password: values.password,
+      });
+
+      if (signInRes?.error) {
+        setServerError(signInRes.error);
+        return;
+      }
+
+      router.push('/');
+    } catch {
+      setServerError('Something went wrong. Please try again.');
     }
-
-    // Auto login after register
-    const signInRes = await signIn('credentials', {
-      redirect: false,
-      email: values.email,
-      password: values.password,
-    });
-
-    const typed = signInRes as { error?: string } | undefined;
-
-    if (typed?.error) {
-      setServerError(typed.error);
-      return;
-    }
-
-    router.push('/');
   }
-
   return { form, serverError, onSubmit };
 }

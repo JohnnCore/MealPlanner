@@ -95,7 +95,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Button variant="ghost" className="w-full bg-white/5">
+                  <Button type="button" variant="ghost" className="w-full bg-white/5">
                     Continue with Google
                   </Button>
                   <Button variant="ghost" className="w-full bg-white/5">

@@ -24,7 +24,22 @@ export async function registerAction(values: RegisterFormValues): Promise<Regist
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  await createUser(name, email, hashedPassword);
+  try {
+    await createUser(name, email, hashedPassword);
+    return { success: true };
+  } catch (err) {
+    // Handle unique constraint race (concurrent registrations)
+    if (
+      err instanceof Error &&
+      /unique|duplicate/i.test(err.message) &&
+      /email/i.test(err.message)
+    ) {
+      return { error: 'User already exists' };
+    }
 
-  return { success: true };
+    // Unexpected error
+    return {
+      error: (err as Error)?.message ?? 'Registration failed',
+    };
+  }
 }
