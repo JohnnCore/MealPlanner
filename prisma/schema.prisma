@@ -1,0 +1,297 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum DietType {
+  OMNIVORE
+  VEGETARIAN
+  VEGAN
+  PESCATARIAN
+  KETO
+  PALEO
+  GLUTEN_FREE
+  LOW_CARB
+}
+
+enum IngredientCategory {
+  VEGETABLE
+  FRUIT
+  MEAT
+  FISH
+  DAIRY
+  GRAIN
+  LEGUME
+  SPICE
+  OIL
+  OTHER
+}
+
+enum UnitType {
+  GRAM
+  KILOGRAM
+  MILLILITER
+  LITER
+  UNIT
+  PIECE
+  TABLESPOON
+  TEASPOON
+}
+
+enum RecipeVisibility {
+  PRIVATE
+  PUBLIC
+  UNLISTED
+}
+
+enum ShoppingListRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum AIGenerationType {
+  RECIPE
+  MEAL_PLAN
+  SHOPPING_OPTIMIZATION
+}
+
+//////////////////////////////////////////////////////
+// USER & AUTH DOMAIN
+//////////////////////////////////////////////////////
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String?
+  password        String?
+  image           String?
+
+  dietType        DietType @default(OMNIVORE)
+  defaultServings Int      @default(1)
+  allowLeftovers  Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  allergies       UserAllergy[]
+  pantryItems     PantryItem[]
+  recipes         Recipe[]
+  mealPlans       MealPlan[]
+  shoppingLists   ShoppingList[]
+  aiGenerations   AIGeneration[]
+  favorites       RecipeFavorite[]
+  collaborations  ShoppingListCollaborator[]
+}
+
+//////////////////////////////////////////////////////
+// ALLERGIES
+//////////////////////////////////////////////////////
+
+model Allergy {
+  id    String @id @default(uuid())
+  name  String @unique
+
+  users UserAllergy[]
+}
+
+model UserAllergy {
+  userId    String
+  allergyId String
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allergy   Allergy @relation(fields: [allergyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, allergyId])
+}
+
+//////////////////////////////////////////////////////
+// INGREDIENT SYSTEM
+//////////////////////////////////////////////////////
+
+model Ingredient {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  category    IngredientCategory
+
+  calories    Float?
+  protein     Float?
+  carbs       Float?
+  fats        Float?
+
+  recipeLinks     RecipeIngredient[]
+  pantryItems     PantryItem[]
+  shoppingItems   ShoppingListItem[]
+}
+
+//////////////////////////////////////////////////////
+// PANTRY
+//////////////////////////////////////////////////////
+
+model PantryItem {
+  id           String   @id @default(uuid())
+  userId       String
+  ingredientId String
+
+  quantity     Float
+  unit         UnitType
+  expiresAt    DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([userId, ingredientId])
+  @@index([userId])
+  @@index([ingredientId])
+}
+
+//////////////////////////////////////////////////////
+// RECIPE SYSTEM
+//////////////////////////////////////////////////////
+
+model Recipe {
+  id             String   @id @default(uuid())
+  title          String
+  description    String?
+  instructions   Json
+  servings       Int
+
+  visibility     RecipeVisibility @default(PRIVATE)
+  isTemplate     Boolean          @default(false)
+  isAIGenerated  Boolean          @default(false)
+
+  authorId       String?
+  author         User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  ingredients    RecipeIngredient[]
+  mealPlans      MealPlan[]
+  favoritedBy    RecipeFavorite[]
+
+  @@index([visibility])
+  @@index([authorId])
+}
+
+model RecipeIngredient {
+  recipeId      String
+  ingredientId  String
+
+  quantity      Float
+  unit          UnitType
+
+  recipe        Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient    Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@id([recipeId, ingredientId])
+  @@index([ingredientId])
+}
+
+model RecipeFavorite {
+  userId   String
+  recipeId String
+
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId])
+}
+
+//////////////////////////////////////////////////////
+// MEAL PLANNING
+//////////////////////////////////////////////////////
+
+model MealPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  recipeId  String
+
+  date      DateTime
+  servings  Int
+
+  createdAt DateTime @default(now())
+
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe @relation(fields: [recipeId], references: [id])
+
+  @@index([userId, date])
+}
+
+//////////////////////////////////////////////////////
+// SHOPPING LISTS (COLLABORATIVE)
+//////////////////////////////////////////////////////
+
+model ShoppingList {
+  id         String   @id @default(uuid())
+  name       String
+
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items         ShoppingListItem[]
+  collaborators ShoppingListCollaborator[]
+
+  @@index([ownerId])
+}
+
+model ShoppingListItem {
+  id             String   @id @default(uuid())
+  shoppingListId String
+  ingredientId   String
+
+  quantity       Float
+  unit           UnitType
+  checked        Boolean  @default(false)
+
+  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
+
+  @@index([shoppingListId])
+}
+
+model ShoppingListCollaborator {
+  shoppingListId String
+  userId         String
+  role           ShoppingListRole
+
+  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([shoppingListId, userId])
+}
+
+//////////////////////////////////////////////////////
+// AI GENERATIONS
+//////////////////////////////////////////////////////
+
+model AIGeneration {
+  id         String   @id @default(uuid())
+  userId     String
+
+  type       AIGenerationType
+  prompt     Json
+  response   Json
+
+  tokensUsed Int?
+  createdAt  DateTime @default(now())
+
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
