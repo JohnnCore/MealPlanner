@@ -454,7 +454,7 @@ const sidebarMenuButtonVariants = cva(
       variant: {
         default: 'hover:bg-sidebar-muted hover:text-sidebar-foreground',
         outline:
-          'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]',
+          'bg-background shadow-[0_0_0_1px_var(--sidebar-border)] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_var(--sidebar-accent)]',
       },
       size: {
         default: 'h-8 text-sm',
@@ -577,10 +577,17 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<'div'> & {
   showIcon?: boolean;
 }) {
-  // Random width between 50 to 90%.
-  const [width] = React.useState(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`;
-  });
+  // Deterministic width between 50 to 90% derived from React's useId to avoid
+  // SSR/client hydration mismatches caused by Math.random in initial state.
+  const id = React.useId();
+  const width = React.useMemo(() => {
+    let seed = 0;
+    for (let i = 0; i < id.length; i++) {
+      seed = (seed * 31 + id.charCodeAt(i)) >>> 0;
+    }
+    const rand = seed % 40; // 0..39
+    return `${rand + 50}%`;
+  }, [id]);
 
   return (
     <div

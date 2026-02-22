@@ -39,8 +39,12 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname() ?? '/';
 
+  const handleLogout = () => {
+    signOut({ callbackUrl: '/login' });
+  };
+
   return (
-    <Sidebar collapsible="none">
+    <Sidebar collapsible="offcanvas">
       {/* ── Brand header ── */}
       <SidebarHeader>
         <div className="flex items-center gap-3 px-2 py-3">
@@ -62,7 +66,8 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map(({ href, label, Icon }) => {
-                const active = pathname === href || (href !== '/' && pathname.startsWith(href));
+                const active =
+                  pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
                 return (
                   <SidebarMenuItem key={href}>
                     <SidebarMenuButton
@@ -88,7 +93,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => signOut({ callbackUrl: '/login' })}>
+            <SidebarMenuButton onClick={handleLogout}>
               <LogOut size={18} />
               <span>Logout</span>
             </SidebarMenuButton>

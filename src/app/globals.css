@@ -80,8 +80,8 @@
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.609 0.154 151.5);
   --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-muted: #f1f3f0;
-  --sidebar-muted-foreground: #636e72;
+  --sidebar-muted: oklch(0.97 0.01 160);
+  --sidebar-muted-foreground: oklch(0.6 0.04 230);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }

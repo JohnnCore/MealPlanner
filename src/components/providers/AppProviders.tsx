@@ -1,10 +1,15 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
+
 import { SessionProvider } from './SessionProvider';
 import { AuthProvider } from './AuthProvider';
 import { useAuthStore } from '@/stores/authStore';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+
+/** Routes that must never be blocked by the auth-loading overlay. */
+const PUBLIC_ROUTES = ['/login', '/register'];
 
 /**
  * Root provider tree. Add future global providers (QueryClient, ThemeProvider, etc.) here.
@@ -26,8 +31,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 function InnerApp({ children }: { children: React.ReactNode }) {
   const user = useAuthStore(state => state.user);
   const isLoading = useAuthStore(state => state.isLoading);
+  const pathname = usePathname();
 
-  if (isLoading) {
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+
+  // Only block protected routes while session hydrates.
+  // Public pages (login, register) render immediately.
+  if (isLoading && !isPublicRoute) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
@@ -43,7 +53,7 @@ function InnerApp({ children }: { children: React.ReactNode }) {
           <SidebarInset>{children}</SidebarInset>
         </SidebarProvider>
       ) : (
-        <>{children}</>
+        <div className="min-h-screen">{children}</div>
       )}
     </>
   );
