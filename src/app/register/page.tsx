@@ -2,6 +2,7 @@
 import { useState } from 'react';
 
 import { Controller } from 'react-hook-form';
+import { User, Mail, Lock, Eye, EyeOff, Check, ChefHat } from 'lucide-react';
 
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
@@ -14,113 +15,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 
 import { useRegister } from '../../hooks/useRegister';
 
-/* ── icons (inline SVG — zero extra deps) ─────────────────── */
-const PersonIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-const MailIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect width="20" height="16" x="2" y="4" rx="2" />
-    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-  </svg>
-);
-const LockIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-  </svg>
-);
-const EyeIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-const EyeOffIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-    <line x1="2" x2="22" y1="2" y2="22" />
-  </svg>
-);
-const CheckIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-const ChefIcon = ({ size = 24 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.042V20a1 1 0 0 0 1 1Z" />
-    <path d="M6 17h12" />
-  </svg>
-);
+/* icons replaced with lucide-react */
 
 const features = [
   'AI-powered recipe suggestions based on your ingredients',
@@ -146,7 +41,7 @@ export default function RegisterPage() {
       <aside className="hidden md:flex flex-col items-center justify-center p-12 bg-linear-to-br from-amber-400 via-emerald-500 to-emerald-700 text-white">
         <div className="max-w-sm text-center">
           <div className="mx-auto mb-6 h-20 w-20 rounded-2xl bg-white/20 flex items-center justify-center">
-            <ChefIcon size={36} />
+            <ChefHat size={36} className="text-white" />
           </div>
           <h2 className="text-3xl font-bold leading-tight">Join the Smart Pantry Community</h2>
           <p className="mt-3 text-white/80 text-sm">
@@ -159,7 +54,7 @@ export default function RegisterPage() {
                 className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm"
               >
                 <span className="shrink-0">
-                  <CheckIcon />
+                  <Check size={16} />
                 </span>
                 {f}
               </li>
@@ -174,7 +69,7 @@ export default function RegisterPage() {
           {/* Logo */}
           <div className="mb-6 flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
-              <ChefIcon size={20} />
+              <ChefHat size={20} />
             </div>
             <div>
               <p className="font-semibold text-base leading-none">Smart Pantry</p>
@@ -194,7 +89,7 @@ export default function RegisterPage() {
                   <FieldLabel>Full Name</FieldLabel>
                   <div className="relative">
                     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
-                      <PersonIcon />
+                      <User size={16} />
                     </span>
                     <Input
                       className="pl-9"
@@ -211,7 +106,7 @@ export default function RegisterPage() {
                   <FieldLabel>Email Address</FieldLabel>
                   <div className="relative">
                     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
-                      <MailIcon />
+                      <Mail size={16} />
                     </span>
                     <Input
                       className="pl-9"
@@ -229,7 +124,7 @@ export default function RegisterPage() {
                   <FieldLabel>Password</FieldLabel>
                   <div className="relative">
                     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
-                      <LockIcon />
+                      <Lock size={16} />
                     </span>
                     <Input
                       className="pl-9 pr-9"
@@ -247,7 +142,7 @@ export default function RegisterPage() {
                         className="text-muted-foreground hover:text-foreground transition-colors"
                         tabIndex={-1}
                       >
-                        {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </Button>
                     </span>
                   </div>
@@ -258,7 +153,7 @@ export default function RegisterPage() {
                   <FieldLabel>Confirm Password</FieldLabel>
                   <div className="relative">
                     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
-                      <LockIcon />
+                      <Lock size={16} />
                     </span>
                     <Input
                       className="pl-9 pr-9"
@@ -276,7 +171,7 @@ export default function RegisterPage() {
                         className="text-muted-foreground hover:text-foreground transition-colors"
                         tabIndex={-1}
                       >
-                        {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
+                        {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                       </Button>
                     </span>
                   </div>

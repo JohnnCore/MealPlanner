@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { Controller } from 'react-hook-form';
+import { ChefHat } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,10 +25,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3">
             <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-primary">
-                <path d="M12 2L15 8H9L12 2Z" fill="currentColor" />
-                <path d="M4 12h16v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6z" fill="currentColor" />
-              </svg>
+              <ChefHat size={20} className="text-primary" />
             </div>
             <div>
               <h2 className="text-2xl font-semibold">Welcome back!</h2>
@@ -118,10 +116,7 @@ export default function LoginPage() {
       <aside className="hidden md:flex items-center justify-center p-12 bg-linear-to-br from-emerald-700 via-emerald-600 to-amber-500">
         <div className="max-w-lg text-center text-white">
           <div className="mx-auto mb-6 h-20 w-20 rounded-xl bg-white/10 flex items-center justify-center">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-white">
-              <path d="M12 2L15 8H9L12 2Z" fill="currentColor" />
-              <path d="M4 12h16v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6z" fill="currentColor" />
-            </svg>
+            <ChefHat size={28} className="text-white" />
           </div>
           <h3 className="text-3xl font-semibold">Smart Cooking Starts Here</h3>
           <p className="mt-3 text-muted-foreground">
