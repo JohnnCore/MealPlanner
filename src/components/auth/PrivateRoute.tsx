@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores/authStore';
+import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
 
 type PrivateRouteProps = {
   children: React.ReactNode;
@@ -13,9 +13,10 @@ type PrivateRouteProps = {
 };
 
 /**
- * Client-side auth guard. Redirects to `redirectTo` when the user is not
- * authenticated. proxy.ts already handles the server-side redirect; this
- * component provides the client-side safety net and loading state.
+ * Client-side auth guard for pages that stay client components end-to-end
+ * (no server-fetched initial data). proxy.ts and requireUser()/requireUserId()
+ * are the real security boundary — this is only a UX safety net that avoids
+ * a flash of protected content while the session resolves.
  */
 export function PrivateRoute({
   children,
@@ -23,16 +24,16 @@ export function PrivateRoute({
   fallback = null,
 }: PrivateRouteProps) {
   const router = useRouter();
-  const { user, isLoading } = useAuthStore();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (status === 'unauthenticated') {
       router.replace(redirectTo);
     }
-  }, [isLoading, user, router, redirectTo]);
+  }, [status, router, redirectTo]);
 
-  if (isLoading) return <>{fallback}</>;
-  if (!user) return null;
+  if (status === 'loading') return <>{fallback}</>;
+  if (!session?.user) return null;
 
   return <>{children}</>;
 }

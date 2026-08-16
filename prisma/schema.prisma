@@ -64,6 +64,28 @@ enum AIGenerationType {
   SHOPPING_OPTIMIZATION
 }
 
+enum CategoryColor {
+  GREEN
+  BLUE
+  RED
+  ORANGE
+  YELLOW
+  PURPLE
+  INDIGO
+  GRAY
+}
+
+enum ListColor {
+  PRIMARY
+  SECONDARY
+  GREEN
+  BLUE
+  PURPLE
+  ORANGE
+  PINK
+  INDIGO
+}
+
 //////////////////////////////////////////////////////
 // USER & AUTH DOMAIN
 //////////////////////////////////////////////////////
@@ -86,10 +108,11 @@ model User {
   pantryItems     PantryItem[]
   recipes         Recipe[]
   mealPlans       MealPlan[]
-  shoppingLists   ShoppingList[]
-  aiGenerations   AIGeneration[]
-  favorites       RecipeFavorite[]
-  collaborations  ShoppingListCollaborator[]
+  shoppingLists       ShoppingList[]
+  shoppingCategories  ShoppingCategory[]
+  aiGenerations       AIGeneration[]
+  favorites           RecipeFavorite[]
+  collaborations      ShoppingListCollaborator[]
 }
 
 //////////////////////////////////////////////////////
@@ -235,8 +258,9 @@ model MealPlan {
 //////////////////////////////////////////////////////
 
 model ShoppingList {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   name       String
+  color      ListColor @default(PRIMARY)
 
   ownerId    String
   owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -250,19 +274,46 @@ model ShoppingList {
   @@index([ownerId])
 }
 
+model ShoppingCategory {
+  id        String        @id @default(uuid())
+  name      String
+  icon      String        @default("🛒")
+  color     CategoryColor @default(GREEN)
+  sortOrder Int           @default(0)
+
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items     ShoppingListItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
 model ShoppingListItem {
   id             String   @id @default(uuid())
   shoppingListId String
-  ingredientId   String
+  categoryId     String
+  ingredientId   String?
 
+  name           String
   quantity       Float
   unit           UnitType
+  notes          String?
   checked        Boolean  @default(false)
+  source         String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
-  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
+  category       ShoppingCategory @relation(fields: [categoryId], references: [id])
+  ingredient     Ingredient?  @relation(fields: [ingredientId], references: [id])
 
   @@index([shoppingListId])
+  @@index([categoryId])
 }
 
 model ShoppingListCollaborator {
