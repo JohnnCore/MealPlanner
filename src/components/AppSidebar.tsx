@@ -1,8 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { signOut } from 'next-auth/react';
-import { usePathname } from 'next/navigation';
 import {
   BookOpen,
   Calendar,
@@ -13,6 +10,9 @@ import {
   ShoppingCart,
   User,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 import {
   Sidebar,
@@ -40,12 +40,12 @@ export function AppSidebar() {
   const pathname = usePathname() ?? '/';
 
   const handleLogout = () => {
-    signOut({ callbackUrl: '/login' });
+    void signOut({ callbackUrl: '/login' });
   };
 
   return (
     <Sidebar collapsible="offcanvas">
-      {/* ── Brand header ── */}
+      {/* -- Brand header -- */}
       <SidebarHeader>
         <div className="flex items-center gap-3 px-2 py-3">
           <div className="h-10 w-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white shrink-0">
@@ -60,7 +60,7 @@ export function AppSidebar() {
 
       <SidebarSeparator />
 
-      {/* ── Navigation ── */}
+      {/* -- Navigation -- */}
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -89,7 +89,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* ── Footer: logout + tip ── */}
+      {/* -- Footer: logout + tip -- */}
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>

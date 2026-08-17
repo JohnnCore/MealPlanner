@@ -1,19 +1,11 @@
-'use client';
+import { requireUserId } from '@/lib/auth-server';
+import { getShoppingListsByUserId, toShoppingListSummaryDTO } from '@/server/shopping/queries/list';
 
-import { PrivateRoute } from '@/components/auth/PrivateRoute';
-import { useAuthStore } from '@/stores/authStore';
+import { ShoppingListClient } from './ShoppingListClient';
 
-export default function ShoppingListPage() {
-  const user = useAuthStore(state => state.user);
+export default async function ShoppingListPage() {
+  const userId = await requireUserId();
+  const lists = await getShoppingListsByUserId(userId);
 
-  return (
-    <PrivateRoute>
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-8">
-        <h1 className="text-3xl font-bold">Shopping List</h1>
-        <p className="text-muted-foreground">
-          You are signed in as <b>{user?.name}</b>. More features coming soon.
-        </p>
-      </main>
-    </PrivateRoute>
-  );
+  return <ShoppingListClient initialLists={lists.map(toShoppingListSummaryDTO)} />;
 }

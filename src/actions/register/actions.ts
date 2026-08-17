@@ -1,9 +1,10 @@
 'use server';
 
-import { registerSchema, type RegisterFormValues } from '@/lib/schemas/auth';
+import bcrypt from 'bcryptjs';
+
+import { type RegisterFormValues,registerSchema } from '@/lib/schemas/auth';
 import { createUser } from '@/server/auth/mutations';
 import { getUserByEmail } from '@/server/auth/queries';
-import bcrypt from 'bcryptjs';
 
 type RegisterResult = { success: true } | { error: string };
 

@@ -1,17 +1,16 @@
 'use client';
-import { useState } from 'react';
-
-import { Controller } from 'react-hook-form';
-import { User, Mail, Lock, Eye, EyeOff, Check, ChefHat } from 'lucide-react';
-
+import { Check, ChefHat,Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
+import { useState } from 'react';
+import { Controller } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent } from '@/components/ui/card';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 
 import { useRegister } from '../../hooks/useRegister';
 
@@ -37,7 +36,7 @@ export default function RegisterPage() {
 
   return (
     <main className="min-h-screen grid grid-cols-1 md:grid-cols-2 font-sans">
-      {/* ── Hero (left) ── */}
+      {/* -- Hero (left) -- */}
       <aside className="hidden md:flex flex-col items-center justify-center p-12 bg-linear-to-br from-amber-400 via-emerald-500 to-emerald-700 text-white">
         <div className="max-w-sm text-center">
           <div className="mx-auto mb-6 h-20 w-20 rounded-2xl bg-white/20 flex items-center justify-center">
@@ -63,7 +62,7 @@ export default function RegisterPage() {
         </div>
       </aside>
 
-      {/* ── Form (right) ── */}
+      {/* -- Form (right) -- */}
       <section className="flex items-center justify-center p-8 bg-background overflow-y-auto">
         <div className="w-full max-w-md py-6">
           {/* Logo */}
