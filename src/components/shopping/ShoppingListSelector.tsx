@@ -43,19 +43,20 @@ export function ShoppingListSelector({
               activeTheme.solid,
               activeTheme.pillText,
             )}
+            type="button"
           >
             <ListChecks className="size-4" />
             <span>{activeList?.name ?? 'Select List'}</span>
-            {activeList && (
+            {activeList ? (
               <span className="text-xs opacity-80">
                 {activeList.itemCount} items &bull; {activeList.checkedCount} completed
               </span>
-            )}
+            ) : null}
             <ChevronDown className="size-4 opacity-70" />
           </button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-72 p-0" align="start">
+        <PopoverContent align="start" className="w-72 p-0">
           <div className="p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Your Shopping Lists
@@ -77,6 +78,7 @@ export function ShoppingListSelector({
                     {/* Clickable row body */}
                     <button
                       className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                      type="button"
                       onClick={() => {
                         onSelectList(list.id);
                         setOpen(false);
@@ -94,8 +96,9 @@ export function ShoppingListSelector({
                     {/* Hover action icons */}
                     <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                       <button
-                        title="Edit"
                         className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                        title="Edit"
+                        type="button"
                         onClick={e => {
                           e.stopPropagation();
                           setOpen(false);
@@ -105,8 +108,9 @@ export function ShoppingListSelector({
                         <Pencil className="size-3.5" />
                       </button>
                       <button
-                        title="Clone"
                         className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                        title="Clone"
+                        type="button"
                         onClick={e => {
                           e.stopPropagation();
                           onCloneList(list.id);
@@ -115,8 +119,9 @@ export function ShoppingListSelector({
                         <Copy className="size-3.5" />
                       </button>
                       <button
-                        title="Delete"
                         className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                        title="Delete"
+                        type="button"
                         onClick={e => {
                           e.stopPropagation();
                           setOpen(false);
@@ -132,11 +137,12 @@ export function ShoppingListSelector({
             </div>
 
             <button
+              className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-green-600 transition-colors hover:bg-green-50"
+              type="button"
               onClick={() => {
                 setOpen(false);
                 onCreateList();
               }}
-              className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-green-600 transition-colors hover:bg-green-50"
             >
               <Plus className="size-4" />
               Create New List
@@ -145,7 +151,7 @@ export function ShoppingListSelector({
         </PopoverContent>
       </Popover>
 
-      <Button variant="outline" size="sm" className="rounded-full" onClick={onCreateList}>
+      <Button className="rounded-full" size="sm" variant="outline" onClick={onCreateList}>
         <Plus className="size-4" />
         New List
       </Button>

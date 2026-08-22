@@ -11,14 +11,14 @@ export default function NotFound() {
           </p>
           <div className="flex justify-center gap-3">
             <Link
-              href="/"
               className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-white"
+              href="/"
             >
               Go to dashboard
             </Link>
             <Link
-              href="/login"
               className="inline-flex items-center gap-2 rounded-md border px-4 py-2"
+              href="/login"
             >
               Sign in
             </Link>

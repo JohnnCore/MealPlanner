@@ -1,14 +1,14 @@
 'use client';
 
 import type { ListColor } from '@prisma/client';
-import { useCallback,useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateList, useUpdateList } from '@/hooks/shopping/useShoppingList';
-import { LIST_COLOR_THEMES,LIST_COLORS } from '@/lib/shopping-constants';
+import { LIST_COLOR_THEMES, LIST_COLORS } from '@/lib/shopping-constants';
 import { cn } from '@/lib/utils';
 import type { ShoppingListSummaryDTO } from '@/types/shopping';
 
@@ -118,8 +118,6 @@ export function CreateListDialog({
                 return (
                   <button
                     key={c}
-                    type="button"
-                    onClick={() => setColor(c)}
                     className={cn(
                       'rounded-lg px-4 py-2 text-sm font-medium text-white transition-all',
                       theme.solid,
@@ -127,6 +125,8 @@ export function CreateListDialog({
                         ? 'ring-2 ring-offset-2 ring-green-500'
                         : 'opacity-80 hover:opacity-100',
                     )}
+                    type="button"
+                    onClick={() => setColor(c)}
                   >
                     {theme.label}
                   </button>
@@ -139,12 +139,12 @@ export function CreateListDialog({
           <div className="flex gap-2">
             <Button
               className="flex-2 bg-green-600 hover:bg-green-700"
-              onClick={handleSubmit}
               disabled={!name.trim() || isPending}
+              onClick={handleSubmit}
             >
               {isEditing ? 'Update List' : 'Create List'}
             </Button>
-            <Button variant="outline" className="flex-1" onClick={() => handleOpenChange(false)}>
+            <Button className="flex-1" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancel
             </Button>
           </div>

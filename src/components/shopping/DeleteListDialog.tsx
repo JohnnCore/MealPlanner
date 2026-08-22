@@ -43,12 +43,12 @@ export function DeleteListDialog({ open, onOpenChange, list, onDeleted }: Delete
           <div className="flex gap-2">
             <Button
               className="flex-2 bg-red-600 hover:bg-red-700"
-              onClick={handleDelete}
               disabled={deleteList.isPending}
+              onClick={handleDelete}
             >
               Delete List
             </Button>
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+            <Button className="flex-1" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
           </div>

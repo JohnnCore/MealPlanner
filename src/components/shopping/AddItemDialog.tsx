@@ -75,9 +75,9 @@ export function AddItemDialog({ open, onOpenChange, listId }: AddItemDialogProps
           <div className="space-y-1.5">
             <Label htmlFor="item-name">Item Name *</Label>
             <Input
+              className="border-green-500 focus-visible:ring-green-500/30"
               id="item-name"
               placeholder="e.g., Fresh Tomatoes"
-              className="border-green-500 focus-visible:ring-green-500/30"
               value={name}
               onChange={e => setName(e.target.value)}
             />
@@ -109,9 +109,9 @@ export function AddItemDialog({ open, onOpenChange, listId }: AddItemDialogProps
               <Label htmlFor="item-qty">Quantity</Label>
               <Input
                 id="item-qty"
-                type="number"
                 min={0}
                 step="any"
+                type="number"
                 value={quantity}
                 onChange={e => setQuantity(e.target.value)}
               />
@@ -148,8 +148,8 @@ export function AddItemDialog({ open, onOpenChange, listId }: AddItemDialogProps
           <div className="flex gap-2">
             <Button
               className="flex-1 bg-green-600 hover:bg-green-700"
-              onClick={handleAdd}
               disabled={!name.trim() || !categoryId || createItem.isPending}
+              onClick={handleAdd}
             >
               Add Item
             </Button>

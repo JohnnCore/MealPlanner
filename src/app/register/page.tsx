@@ -1,5 +1,5 @@
 'use client';
-import { Check, ChefHat,Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { Check, ChefHat, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
@@ -40,7 +40,7 @@ export default function RegisterPage() {
       <aside className="hidden md:flex flex-col items-center justify-center p-12 bg-linear-to-br from-amber-400 via-emerald-500 to-emerald-700 text-white">
         <div className="max-w-sm text-center">
           <div className="mx-auto mb-6 h-20 w-20 rounded-2xl bg-white/20 flex items-center justify-center">
-            <ChefHat size={36} className="text-white" />
+            <ChefHat className="text-white" size={36} />
           </div>
           <h2 className="text-3xl font-bold leading-tight">Join the Smart Pantry Community</h2>
           <p className="mt-3 text-white/80 text-sm">
@@ -83,7 +83,7 @@ export default function RegisterPage() {
 
           <Card>
             <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
                 <Field>
                   <FieldLabel>Full Name</FieldLabel>
                   <div className="relative">
@@ -91,9 +91,9 @@ export default function RegisterPage() {
                       <User size={16} />
                     </span>
                     <Input
+                      autoComplete="name"
                       className="pl-9"
                       placeholder="John Doe"
-                      autoComplete="name"
                       {...register('name')}
                       aria-invalid={!!errors.name}
                     />
@@ -108,10 +108,10 @@ export default function RegisterPage() {
                       <Mail size={16} />
                     </span>
                     <Input
+                      autoComplete="email"
                       className="pl-9"
                       placeholder="you@example.com"
                       type="email"
-                      autoComplete="email"
                       {...register('email')}
                       aria-invalid={!!errors.email}
                     />
@@ -126,20 +126,20 @@ export default function RegisterPage() {
                       <Lock size={16} />
                     </span>
                     <Input
+                      autoComplete="new-password"
                       className="pl-9 pr-9"
                       placeholder="••••••••"
                       type={showPassword ? 'text' : 'password'}
-                      autoComplete="new-password"
                       {...register('password')}
                       aria-invalid={!!errors.password}
                     />
                     <span className="absolute inset-y-0 right-3 flex items-center">
                       <Button
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
                         type="button"
                         variant="ghost"
                         onClick={() => setShowPassword(v => !v)}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                        tabIndex={-1}
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </Button>
@@ -155,20 +155,20 @@ export default function RegisterPage() {
                       <Lock size={16} />
                     </span>
                     <Input
+                      autoComplete="new-password"
                       className="pl-9 pr-9"
                       placeholder="••••••••"
                       type={showConfirm ? 'text' : 'password'}
-                      autoComplete="new-password"
                       {...register('confirmPassword')}
                       aria-invalid={!!errors.confirmPassword}
                     />
                     <span className="absolute inset-y-0 right-3 flex items-center">
                       <Button
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
                         type="button"
                         variant="ghost"
                         onClick={() => setShowConfirm(v => !v)}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                        tabIndex={-1}
                       >
                         {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                       </Button>
@@ -181,28 +181,28 @@ export default function RegisterPage() {
                 <Field>
                   <div className="flex items-start gap-2">
                     <Controller
-                      name="terms"
                       control={control}
+                      name="terms"
                       render={({ field }) => (
                         <Checkbox
-                          id="terms"
-                          className="mt-0.5"
-                          checked={!!field.value}
-                          onCheckedChange={field.onChange}
                           aria-invalid={!!errors.terms}
+                          checked={!!field.value}
+                          className="mt-0.5"
+                          id="terms"
+                          onCheckedChange={field.onChange}
                         />
                       )}
                     />
                     <Label
-                      htmlFor="terms"
                       className="text-sm font-normal text-muted-foreground leading-snug cursor-pointer"
+                      htmlFor="terms"
                     >
                       I agree to the{' '}
-                      <Link href="#" className="text-emerald-500 hover:underline">
+                      <Link className="text-emerald-500 hover:underline" href="#">
                         Terms of Service
                       </Link>{' '}
                       and{' '}
-                      <Link href="#" className="text-emerald-500 hover:underline">
+                      <Link className="text-emerald-500 hover:underline" href="#">
                         Privacy Policy
                       </Link>
                     </Label>
@@ -210,12 +210,12 @@ export default function RegisterPage() {
                   <FieldError errors={[errors.terms]} />
                 </Field>
 
-                {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+                {serverError ? <p className="text-sm text-destructive">{serverError}</p> : null}
 
                 <Button
-                  type="submit"
-                  disabled={isSubmitting}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={isSubmitting}
+                  type="submit"
                 >
                   {isSubmitting ? 'Creating account…' : 'Create Account'}
                 </Button>
@@ -228,17 +228,17 @@ export default function RegisterPage() {
 
                 <div className="space-y-2">
                   <Button
+                    className="w-full bg-white/5"
                     type="button"
                     variant="ghost"
-                    className="w-full bg-white/5"
                     onClick={() => signIn('google')}
                   >
                     Sign up with Google
                   </Button>
                   <Button
+                    className="w-full bg-white/5"
                     type="button"
                     variant="ghost"
-                    className="w-full bg-white/5"
                     onClick={() => signIn('github')}
                   >
                     Sign up with GitHub
@@ -247,7 +247,7 @@ export default function RegisterPage() {
 
                 <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{' '}
-                  <Link href="/login" className="text-emerald-500 hover:underline">
+                  <Link className="text-emerald-500 hover:underline" href="/login">
                     Sign in
                   </Link>
                 </p>

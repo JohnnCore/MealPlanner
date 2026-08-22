@@ -2,7 +2,7 @@
 
 import bcrypt from 'bcryptjs';
 
-import { type RegisterFormValues,registerSchema } from '@/lib/schemas/auth';
+import { type RegisterFormValues, registerSchema } from '@/lib/schemas/auth';
 import { createUser } from '@/server/auth/mutations';
 import { getUserByEmail } from '@/server/auth/queries';
 

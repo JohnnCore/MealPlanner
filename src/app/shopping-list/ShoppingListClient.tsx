@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, Grid2X2,Plus, Share2, Trash2 } from 'lucide-react';
+import { Download, Grid2X2, Plus, Share2, Trash2 } from 'lucide-react';
 
 import { AddItemDialog } from '@/components/shopping/AddItemDialog';
 import { CategoryCard } from '@/components/shopping/CategoryCard';
@@ -66,13 +66,13 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
       {/* -- List selector -- */}
       <div className="mt-4">
         <ShoppingListSelector
-          lists={lists}
           activeList={activeList}
-          onSelectList={handleSelectList}
-          onCreateList={() => handleCreateListOpenChange(true)}
-          onEditList={handleEditList}
+          lists={lists}
           onCloneList={handleCloneList}
+          onCreateList={() => handleCreateListOpenChange(true)}
           onDeleteList={handleDeleteListRequest}
+          onEditList={handleEditList}
+          onSelectList={handleSelectList}
         />
       </div>
 
@@ -81,7 +81,7 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
       ) : (
         <>
           {/* -- Progress card -- */}
-          {totalItems > 0 && (
+          {totalItems > 0 ? (
             <div className="mt-6 rounded-xl border bg-green-50/50 p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -106,7 +106,7 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
                 />
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* -- Actions bar -- */}
           <div className="mt-6 flex items-center justify-between">
@@ -127,21 +127,21 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
                 Export
               </Button>
             </div>
-            {checkedItems > 0 && (
+            {checkedItems > 0 ? (
               <Button
-                variant="outline"
                 className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
-                onClick={handleClearChecked}
                 disabled={isClearingChecked}
+                variant="outline"
+                onClick={handleClearChecked}
               >
                 <Trash2 className="size-4" />
                 Clear {checkedItems} Checked
               </Button>
-            )}
+            ) : null}
           </div>
 
           {/* -- Category grid -- */}
-          {activeCategories.length === 0 && (
+          {activeCategories.length === 0 ? (
             <div className="mt-16 flex flex-col items-center gap-3 text-center">
               <p className="text-lg font-medium text-muted-foreground">
                 Your shopping list is empty
@@ -150,7 +150,7 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
                 Create categories and add items to get started!
               </p>
             </div>
-          )}
+          ) : null}
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {activeCategories.map(cat => (
@@ -158,9 +158,9 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
                 key={cat.id}
                 category={cat}
                 items={itemsByCategory.get(cat.id) ?? []}
-                onToggleItem={handleToggleItem}
                 onDeleteItem={handleDeleteItem}
                 onEditCategory={handleEditCategory}
+                onToggleItem={handleToggleItem}
               />
             ))}
           </div>
@@ -169,25 +169,25 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
 
       {/* Dialogs */}
       <ManageCategoriesDialog
-        open={manageCategoriesOpen}
-        onOpenChange={handleManageCategoriesOpenChange}
         editCategory={editingCategory}
         listId={activeListId}
+        open={manageCategoriesOpen}
+        onOpenChange={handleManageCategoriesOpenChange}
       />
-      <AddItemDialog open={addItemOpen} onOpenChange={setAddItemOpen} listId={activeListId} />
+      <AddItemDialog listId={activeListId} open={addItemOpen} onOpenChange={setAddItemOpen} />
       <CreateListDialog
-        open={createListOpen}
-        onOpenChange={handleCreateListOpenChange}
-        onCreated={handleSelectList}
         editList={editingList}
+        open={createListOpen}
+        onCreated={handleSelectList}
+        onOpenChange={handleCreateListOpenChange}
       />
       <DeleteListDialog
+        list={deletingList}
         open={!!deletingList}
+        onDeleted={handleDeleteListConfirmed}
         onOpenChange={open => {
           if (!open) setDeletingList(null);
         }}
-        list={deletingList}
-        onDeleted={handleDeleteListConfirmed}
       />
     </main>
   );

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { registerAction } from '@/actions/register/actions';
-import { type RegisterFormValues,registerSchema } from '@/lib/schemas/auth';
+import { type RegisterFormValues, registerSchema } from '@/lib/schemas/auth';
 
 export function useRegister() {
   const [serverError, setServerError] = useState<string | null>(null);

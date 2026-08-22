@@ -32,8 +32,8 @@ export function PrivateRoute({
     }
   }, [status, router, redirectTo]);
 
-  if (status === 'loading') return <>{fallback}</>;
+  if (status === 'loading') return fallback;
   if (!session?.user) return null;
 
-  return <>{children}</>;
+  return children;
 }

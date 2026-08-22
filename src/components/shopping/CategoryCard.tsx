@@ -39,6 +39,7 @@ export function CategoryCard({
         </div>
         <button
           className="text-muted-foreground hover:text-foreground"
+          type="button"
           onClick={() => onEditCategory(category)}
         >
           <Pencil className="size-4" />
@@ -61,8 +62,8 @@ export function CategoryCard({
           <ShoppingItemRow
             key={item.id}
             item={item}
-            onToggle={() => onToggleItem(item)}
             onDelete={() => onDeleteItem(item.id)}
+            onToggle={() => onToggleItem(item)}
           />
         ))}
       </div>

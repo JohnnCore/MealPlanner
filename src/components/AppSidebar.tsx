@@ -72,9 +72,9 @@ export function AppSidebar() {
                   <SidebarMenuItem key={href}>
                     <SidebarMenuButton
                       asChild
+                      aria-current={active ? 'page' : undefined}
                       isActive={active}
                       size="lg"
-                      aria-current={active ? 'page' : undefined}
                     >
                       <Link href={href}>
                         <Icon size={18} />

@@ -1,4 +1,4 @@
-import { MutationCache,QueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 const FIVE_MINUTES = 1000 * 60 * 5;
