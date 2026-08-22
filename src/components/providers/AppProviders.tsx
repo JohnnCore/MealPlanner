@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 import { AppSidebar } from '@/components/AppSidebar';
-import { SidebarInset,SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 
 import { QueryProvider } from './QueryProvider';
@@ -47,16 +47,12 @@ function InnerApp({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return (
-    <>
-      {session?.user ? (
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>{children}</SidebarInset>
-        </SidebarProvider>
-      ) : (
-        <div className="min-h-screen">{children}</div>
-      )}
-    </>
+  return session?.user ? (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>{children}</SidebarInset>
+    </SidebarProvider>
+  ) : (
+    <div className="min-h-screen">{children}</div>
   );
 }

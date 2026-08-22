@@ -6,7 +6,7 @@ import { Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Field, FieldError,FieldLabel } from '@/components/ui/field';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3">
             <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
-              <ChefHat size={20} className="text-primary" />
+              <ChefHat className="text-primary" size={20} />
             </div>
             <div>
               <h2 className="text-2xl font-semibold">Welcome back!</h2>
@@ -37,7 +37,7 @@ export default function LoginPage() {
 
           <Card>
             <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
                 <Field>
                   <FieldLabel>Email Address</FieldLabel>
                   <Input
@@ -60,31 +60,31 @@ export default function LoginPage() {
                   <FieldError errors={[errors.password]} />
                 </Field>
 
-                {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+                {serverError ? <p className="text-sm text-destructive">{serverError}</p> : null}
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Controller
-                      name="remember"
                       control={control}
+                      name="remember"
                       render={({ field }) => (
                         <Checkbox
-                          id="remember"
                           checked={!!field.value}
+                          id="remember"
                           onCheckedChange={field.onChange}
                         />
                       )}
                     />
-                    <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground">
+                    <Label className="text-sm font-normal text-muted-foreground" htmlFor="remember">
                       Remember me for 30 days
                     </Label>
                   </div>
-                  <Link href="#" className="text-sm text-primary hover:underline">
+                  <Link className="text-sm text-primary hover:underline" href="#">
                     Forgot password?
                   </Link>
                 </div>
 
-                <Button type="submit" disabled={isSubmitting} className="w-full">
+                <Button className="w-full" disabled={isSubmitting} type="submit">
                   {isSubmitting ? 'Signing...' : 'Sign In'}
                 </Button>
 
@@ -95,17 +95,17 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Button type="button" variant="ghost" className="w-full bg-white/5">
+                  <Button className="w-full bg-white/5" type="button" variant="ghost">
                     Continue with Google
                   </Button>
-                  <Button variant="ghost" className="w-full bg-white/5">
+                  <Button className="w-full bg-white/5" variant="ghost">
                     Continue with GitHub
                   </Button>
                 </div>
 
                 <p className="text-center text-sm text-muted-foreground">
                   Don&apos;t have an account?{' '}
-                  <Link href="/register" className="text-primary">
+                  <Link className="text-primary" href="/register">
                     Sign up for free
                   </Link>
                 </p>
@@ -118,7 +118,7 @@ export default function LoginPage() {
       <aside className="hidden md:flex items-center justify-center p-12 bg-linear-to-br from-emerald-700 via-emerald-600 to-amber-500">
         <div className="max-w-lg text-center text-white">
           <div className="mx-auto mb-6 h-20 w-20 rounded-xl bg-white/10 flex items-center justify-center">
-            <ChefHat size={28} className="text-white" />
+            <ChefHat className="text-white" size={28} />
           </div>
           <h3 className="text-3xl font-semibold">Smart Cooking Starts Here</h3>
           <p className="mt-3 text-muted-foreground">

@@ -18,12 +18,12 @@ export function ShoppingItemRow({ item, onToggle, onDelete }: ShoppingItemRowPro
     <div className="group flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-white/50">
       <Checkbox
         checked={item.checked}
-        onCheckedChange={onToggle}
         className={cn(
           'size-5',
           item.checked &&
             'border-green-600 bg-green-600 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600',
         )}
+        onCheckedChange={onToggle}
       />
       <div className="min-w-0 flex-1">
         <p
@@ -38,16 +38,17 @@ export function ShoppingItemRow({ item, onToggle, onDelete }: ShoppingItemRowPro
           <span className="text-xs text-muted-foreground">
             {item.quantity} {unitLabel}
           </span>
-          {item.source && (
+          {item.source ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
               ✦ {item.source}
             </span>
-          )}
+          ) : null}
         </div>
       </div>
       <button
-        onClick={onDelete}
         className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+        type="button"
+        onClick={onDelete}
       >
         <Trash2 className="size-4" />
       </button>

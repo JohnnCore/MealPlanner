@@ -2,7 +2,7 @@
 
 import type { CategoryColor } from '@prisma/client';
 import { Pencil, Trash2 } from 'lucide-react';
-import { useCallback,useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -140,14 +140,14 @@ export function ManageCategoriesDialog({
                 {CATEGORY_ICONS.map(emoji => (
                   <button
                     key={emoji}
-                    type="button"
-                    onClick={() => setIcon(emoji)}
                     className={cn(
                       'flex h-11 w-11 items-center justify-center rounded-lg border-2 text-xl transition-colors',
                       icon === emoji
                         ? 'border-green-500 bg-green-50'
                         : 'border-transparent bg-gray-50 hover:bg-gray-100',
                     )}
+                    type="button"
+                    onClick={() => setIcon(emoji)}
                   >
                     {emoji}
                   </button>
@@ -164,14 +164,14 @@ export function ManageCategoriesDialog({
                   return (
                     <button
                       key={c}
-                      type="button"
-                      onClick={() => setColor(c)}
                       className={cn(
                         'rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors',
                         theme.pill,
                         theme.pillText,
                         color === c ? 'border-green-500' : 'border-transparent',
                       )}
+                      type="button"
+                      onClick={() => setColor(c)}
                     >
                       {theme.label}
                     </button>
@@ -185,20 +185,20 @@ export function ManageCategoriesDialog({
               <div className="flex gap-2">
                 <Button
                   className="flex-2 bg-green-600 hover:bg-green-700"
-                  onClick={handleUpdate}
                   disabled={!name.trim() || isPending}
+                  onClick={handleUpdate}
                 >
                   Update Category
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+                <Button className="flex-1" variant="outline" onClick={() => onOpenChange(false)}>
                   Cancel Edit
                 </Button>
               </div>
             ) : (
               <Button
                 className="w-full bg-green-600 hover:bg-green-700"
-                onClick={handleCreate}
                 disabled={!name.trim() || isPending}
+                onClick={handleCreate}
               >
                 Add Category
               </Button>
@@ -211,11 +211,11 @@ export function ManageCategoriesDialog({
           <div className="space-y-2">
             <p className="text-sm font-semibold">Your Categories</p>
 
-            {categories.length === 0 && (
+            {categories.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">
                 No categories yet. Create one above!
               </p>
-            )}
+            ) : null}
 
             {categories.map(cat => {
               const theme = COLOR_THEMES[cat.color];
@@ -236,19 +236,19 @@ export function ManageCategoriesDialog({
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => startEditing(cat)}
                       className="text-muted-foreground hover:text-foreground"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => startEditing(cat)}
                     >
                       <Pencil className="size-4" />
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleDelete(cat)}
-                      disabled={deleteCategory.isPending}
                       className="text-muted-foreground hover:text-destructive"
+                      disabled={deleteCategory.isPending}
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => handleDelete(cat)}
                     >
                       <Trash2 className="size-4" />
                     </Button>

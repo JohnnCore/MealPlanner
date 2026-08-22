@@ -214,7 +214,10 @@ export function useClearCheckedItems(listId: string | undefined) {
 
   return useMutation({
     mutationFn: () => unwrapAction(clearCheckedItemsAction(listId)),
-    meta: { successMessage: 'Checked items cleared', errorMessage: 'Failed to clear checked items' },
+    meta: {
+      successMessage: 'Checked items cleared',
+      errorMessage: 'Failed to clear checked items',
+    },
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: key });
       const prevList = qc.getQueryData<ShoppingListData>(key);

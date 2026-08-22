@@ -4,7 +4,7 @@ import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { type LoginFormValues,loginSchema } from '@/lib/schemas/auth';
+import { type LoginFormValues, loginSchema } from '@/lib/schemas/auth';
 
 export function useLogin() {
   const [serverError, setServerError] = useState<string | null>(null);

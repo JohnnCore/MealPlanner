@@ -9,20 +9,20 @@
 
 **Smart Pantry** is a full-stack AI-powered meal planner built with **Next.js 16** (App Router). It lets users manage their pantry, get AI recipe suggestions, plan meals, and collaborate on shopping lists.
 
-| Layer          | Technology                                                                                            |
-| -------------- | ----------------------------------------------------------------------------------------------------- |
-| Framework      | Next.js 16 (App Router, React 19, React Compiler enabled)                                             |
-| Language       | TypeScript (strict mode)                                                                              |
-| Database       | PostgreSQL via Prisma ORM 7 (`@prisma/adapter-pg` driver adapter)                                     |
-| Auth           | NextAuth v4 (Credentials provider, JWT strategy)                                                      |
-| State (server) | Server Components (initial reads) + TanStack React Query v5 (client-side caching, optimistic updates) |
-| State (client) | Zustand (UI-only state — never server/auth state)                                                     |
-| Forms          | React Hook Form + Zod validation                                                                      |
-| UI             | shadcn/ui (New York style) + Radix UI primitives + Tailwind CSS v4                                    |
-| Icons          | Lucide React                                                                                          |
-| Notifications  | Sonner (`components/ui/sonner.tsx`), driven globally via TanStack Query's `MutationCache`             |
-| Linting        | ESLint (next/core-web-vitals + typescript + simple-import-sort + type-aware promise checks)           |
-| Formatting     | Prettier                                                                                              |
+| Layer          | Technology                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Framework      | Next.js 16 (App Router, React 19, React Compiler enabled)                                                                       |
+| Language       | TypeScript (strict mode)                                                                                                        |
+| Database       | PostgreSQL via Prisma ORM 7 (`@prisma/adapter-pg` driver adapter)                                                               |
+| Auth           | NextAuth v4 (Credentials provider, JWT strategy)                                                                                |
+| State (server) | Server Components (initial reads) + TanStack React Query v5 (client-side caching, optimistic updates)                           |
+| State (client) | Zustand (UI-only state — never server/auth state)                                                                               |
+| Forms          | React Hook Form + Zod validation                                                                                                |
+| UI             | shadcn/ui (New York style) + Radix UI primitives + Tailwind CSS v4                                                              |
+| Icons          | Lucide React                                                                                                                    |
+| Notifications  | Sonner (`components/ui/sonner.tsx`), driven globally via TanStack Query's `MutationCache`                                       |
+| Linting        | ESLint (next/core-web-vitals + typescript + simple-import-sort + type-aware promise checks + full jsx-a11y + JSX quality rules) |
+| Formatting     | Prettier                                                                                                                        |
 
 ---
 
@@ -218,8 +218,12 @@ Prisma
 - **Type-only imports use `import type`** — enforced by `@typescript-eslint/consistent-type-imports` (`warn`)
 - **No stray `console.*` calls** — `no-console` (`warn`); use a real logging path or remove before committing
 - **Async code is checked for unhandled promises** — `@typescript-eslint/no-floating-promises` / `no-misused-promises` (`warn`), type-aware, scoped to `**/*.{ts,tsx}` via a dedicated `languageOptions.parser`/`projectService` block in `eslint.config.mjs` (`eslint-config-next` doesn't enable type-aware parsing by default). If you add a rule that needs real type info, it has to go in that block, not the general one — plain `parserOptions` without `projectService` won't have access to the type checker
-  - `no-misused-promises` has `checksVoidReturn: { attributes: false }` — passing an async handler directly to a JSX prop (`onClick={async () => ...}`, `onSubmit={handleSubmit(onSubmit)}` from React Hook Form) is normal and intentionally *not* flagged; the rule still catches genuine misuse (a promise used where a boolean/condition is expected)
+  - `no-misused-promises` has `checksVoidReturn: { attributes: false }` — passing an async handler directly to a JSX prop (`onClick={async () => ...}`, `onSubmit={handleSubmit(onSubmit)}` from React Hook Form) is normal and intentionally _not_ flagged; the rule still catches genuine misuse (a promise used where a boolean/condition is expected)
   - A truly fire-and-forget call outside JSX (e.g. `signOut()` in a plain event handler) should be marked with `void` — see `AppSidebar.tsx`'s `handleLogout` — rather than silently left unawaited
+- **JSX/component-quality rules** (`react/jsx-sort-props`, `no-unstable-nested-components`, `jsx-no-leaked-render`, `button-has-type`, `jsx-no-useless-fragment`, `destructuring-assignment`, etc., all `warn` except a few genuine-bug-risk ones at `error`) apply to everything under `src/**/*.{ts,tsx}` **except `src/components/ui/**`** — those are shadcn-generated and never hand-edited (see below), so linting them against our stylistic rules would just be permanent unfixable noise. `react/function-component-definition` is set to `function-declaration` (not the more common `arrow-function`) because that's what every component in this codebase — including every Next.js page/layout special file — already uses
+- **Full `eslint-plugin-jsx-a11y` recommended ruleset** is active (not just the handful `core-web-vitals` bundles) — same `components/ui/**` exclusion applies
+- When adding a rule that references a plugin already registered by `eslint-config-next` (`react`, `jsx-a11y`, `react-hooks`) — don't re-import and re-spread that plugin's own config object; flat config errors on redefining a plugin under the same name. Add a `rules`-only block instead (see `eslint.config.mjs` for the pattern)
+- `curly` is `['warn', 'multi-line']`, not `'all'` — this codebase's dominant style is single-line guard clauses (`if (!list) return { error: '...' };`); forcing braces everywhere would fight that on 70+ existing lines for no real safety gain. Braces are still required once a block body wraps past one line
 
 ### 4.2 React & Components
 
