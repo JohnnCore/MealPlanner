@@ -32,6 +32,7 @@
 meal-planner/
 ├── prisma/
 │   ├── schema.prisma            # Single schema, all domain models
+│   ├── seed.mts                 # Reference-data seed (allergies) — the one sanctioned place outside server/ that touches Prisma
 │   └── migrations/              # Prisma Migrate output
 │
 ├── public/                      # Static assets
@@ -87,7 +88,7 @@ meal-planner/
 │   │       └── mutations.ts     # Write operations (create, update, delete)
 │   │
 │   ├── services/                # ⭐ Server-side domain/application services (business logic, orchestration)
-│   │   └── <domain>.ts          # e.g. services/ai.ts, services/recipeGenerator.ts — composes server/, calls external APIs
+│   │   └── <domain>.ts          # e.g. services/profile.ts — composes server/, calls external APIs
 │   │
 │   ├── stores/                  # Zustand stores — UI-only state, never server or auth state
 │   │   └── <domain>Store.ts
@@ -275,6 +276,7 @@ Prisma
   onSettled → invalidate queries
   ```
 - Query keys come from `queryKeys` object in `@/lib/queryKeys.ts` — never hardcode key arrays
+- A feature can use `useMutation` **without** owning any `useQuery` — `hooks/profile/useProfile.ts` does this purely for the pending/error lifecycle and the global toasts, since the profile page's initial data comes from its Server Component. Don't add an API route or a query key just to make a mutation hook feel complete
 - **Toast notifications are global, not per-hook.** `lib/queryClient.ts` registers a `MutationCache` with `onSuccess`/`onError` that read `mutation.meta.successMessage` / `mutation.meta.errorMessage` (typed via `types/react-query.d.ts`) and call `sonner`'s `toast.success`/`toast.error`. To add feedback to a mutation, add `meta: { successMessage: '...', errorMessage: '...' }` to its `useMutation(...)` call — don't call `toast()` directly inside `onSuccess`/`onError`, and don't build a new notification hook per feature
 - Omit `meta.successMessage` for high-frequency, low-stakes mutations that already have their own visual feedback (e.g. a checkbox toggle) — a toast there is noise, not signal. Always set `errorMessage` (or accept the thrown error's own message as the fallback) so failures are never silent
 
@@ -295,8 +297,21 @@ Prisma
 ### 4.9 Domain Services (services/)
 
 - Create `src/services/<domain>.ts` only when logic spans multiple `server/` calls, calls an external API (OpenAI), or encodes non-trivial business rules — not for a plain single-table CRUD wrapper
+- `services/profile.ts` is the reference example: it checks email uniqueness against `server/auth/queries.ts` before writing through `server/profile/mutations.ts`, verifies a bcrypt hash before a password change, and confirms the typed email before a cascade delete
+- Throw a domain error subclass (e.g. `ProfileError`) for expected, user-facing failures. The calling action catches it and returns `{ error: e.message }`; anything else re-throws as a real 500 rather than being flattened into a friendly string
 - Services are plain async functions called from `actions/` or `app/api/`, never from components or hooks directly
 - Services call `server/<domain>/` for data access — they never import Prisma directly
+
+### 4.10 Adapting Figma / v0 Exports
+
+Generated UI code is a **visual spec, not a drop-in component**. Before committing an export:
+
+- **Strip dependencies we don't have.** There is no animation library in this project — delete `motion/react` (`<motion.div>`, `initial`/`animate`/`transition`) rather than adding one for entrance effects. Use Tailwind transitions if a state change genuinely needs to be animated
+- **Replace raw elements with our primitives** — `<input>` → `@/components/ui/input`, `<select>` → `Select*`, hand-rolled peer-checkbox toggles → `Switch`, `confirm()`-style destructive flows → `AlertDialog`. Exports reinvent these because they have no design system to import from
+- **Exports hold everything in one `useState` object.** Split it: form fields go to React Hook Form + a Zod schema, dialog open/close goes to `useState`, and the whole thing gets composed in a `use<Page>Page.ts` orchestrator
+- **Mocked data is a question, not a decision.** An export that hardcodes `"Alex Thompson"` or a `preferences` object the schema has no column for means either a migration or a cut feature — decide deliberately instead of shipping the placeholder
+- **Re-check accessibility.** Exports routinely ship label-less inputs, `<div>` buttons, and icon-only controls. The full `jsx-a11y` ruleset is on, so these surface as lint errors — fix them at the markup level, don't disable the rule
+- **Split by section.** A 400-line export becomes one `<Route>Client.tsx` plus a component per card in `src/components/<domain>/` (see `src/components/profile/`)
 
 ---
 
@@ -305,6 +320,7 @@ Prisma
 1. **Middleware** (`proxy.ts`): Checks JWT on every request. Redirects unauthenticated users to `/login`, and authenticated users away from `/login` and `/register`
 2. **NextAuth** (`lib/auth.ts`): Credentials provider with bcrypt. JWT strategy. Session shape augmented in `types/next-auth.d.ts`
 3. **Client-side session access**: components call NextAuth's `useSession()` directly — there is no Zustand mirror of session state. Auth is not a candidate for `stores/`; only UI state belongs there
+   - The JWT carries a snapshot of `name`/`email`, so editing them in the profile would otherwise leave the sidebar stale until the next login. `useProfilePage` calls `useSession().update({ name, email })` after a successful save, and the `jwt` callback in `lib/auth.ts` applies that patch when `trigger === 'update'`. Any future flow that changes a field mirrored into the token must do the same
 4. **PrivateRoute** (`components/auth/PrivateRoute.tsx`): a client-side UX guard (avoids a flash of protected content while the session resolves). It is **not** a security boundary — never treat "wrapped in `<PrivateRoute>`" as equivalent to "protected". Real authorization happens server-side, on every request
 5. **Server-side auth** (`lib/auth-server.ts`):
    - `requireUser()` / `requireUserId()` — for Server Components and Server Actions. Redirects to `/login` if unauthenticated (never returns an error value, so callers don't need to check for one)
@@ -321,6 +337,8 @@ Prisma
 - **Singleton pattern**: `lib/prisma.ts` caches the pool and client on `globalThis` in development
 - **Pool tuning**: Via env vars `PG_MAX_POOL_SIZE`, `PG_IDLE_TIMEOUT_MS`, `PG_CONN_TIMEOUT_MS`
 - **Migrations**: Use `npx prisma migrate dev` for development, `npx prisma migrate deploy` for production
+- **Seeding**: `npm run db:seed` runs `prisma/seed.mts` (wired via `migrations.seed` in `prisma.config.ts`). It loads reference data the app assumes exists — currently the `Allergy` catalogue — and is idempotent, so it is safe to re-run. It is `.mts` and self-contained on purpose: Node runs it directly, so `@/` aliases don't resolve and it constructs its own `PrismaClient`. This is the **only** sanctioned exception to "Prisma access only through `server/`" (§10.6), because it runs outside the Next.js app entirely
+- **Reference data is a dependency, not a fixture** — a feature that reads a seeded table should degrade visibly when it's empty rather than silently render nothing (see `AllergiesSection`, which tells you to run the seed)
 - **Schema conventions**: UUIDs for all IDs, `createdAt`/`updatedAt` timestamps, cascade deletes on ownership relations, composite IDs for join tables
 
 ### Domain Models
@@ -328,6 +346,7 @@ Prisma
 | Domain         | Models                                                                             |
 | -------------- | ---------------------------------------------------------------------------------- |
 | User & Auth    | `User`, `Allergy`, `UserAllergy`                                                   |
+| Profile        | `User` (diet, servings, leftovers, notification prefs) + `UserAllergy` selection   |
 | Ingredients    | `Ingredient`                                                                       |
 | Pantry         | `PantryItem`                                                                       |
 | Recipes        | `Recipe`, `RecipeIngredient`, `RecipeFavorite`                                     |
@@ -408,6 +427,7 @@ When building a new domain feature, follow this order:
 
 ```bash
 npm run dev           # Start dev server
+npm run db:seed       # Seed reference data (allergies) — idempotent
 npm run build         # Production build
 npm run start         # Start production server
 npm run lint          # Run ESLint
@@ -426,7 +446,7 @@ npm run format:check  # Check formatting
 3. **Pages are Server Components** — Initial data fetching happens server-side in `page.tsx`. Interactivity is isolated to a colocated `<Route>Client.tsx` (`'use client'`), keeping client JS to the parts that actually need it.
 4. **Auth is not duplicated in Zustand** — Client components use NextAuth's `useSession()` directly. Zustand is reserved for UI-only state (sidebar, theme, filters, wizard state) and is never a mirror of session or other server data.
 5. **shadcn/ui components are read-only** — Never edit files in `src/components/ui/`. Extend via wrapper components or composition.
-6. **Prisma access only through server/** — Never import `prisma` directly in Server Components, Server Actions, API routes, components, hooks, or services. Every DB call must be a named function defined in `src/server/<domain>/queries.ts` (reads) or `src/server/<domain>/mutations.ts` (writes). This keeps the data-access layer testable and co-located.
+6. **Prisma access only through server/** — Never import `prisma` directly in Server Components, Server Actions, API routes, components, hooks, or services. Every DB call must be a named function defined in `src/server/<domain>/queries.ts` (reads) or `src/server/<domain>/mutations.ts` (writes). This keeps the data-access layer testable and co-located. The single exception is `prisma/seed.mts`, which runs outside the app (see §6).
 7. **`services/` is server-side domain logic, not a client fetch layer** — Use it only when an operation spans multiple `server/` calls, hits an external API, or encodes non-trivial business rules (e.g. AI recipe generation). A single-table CRUD action calls `server/` directly; it does not need a service.
 8. **`PrivateRoute` is a UX safety net, not a security boundary** — The actual authorization boundary is server-side: `requireUser()`/`requireUserId()` in every Server Component, Server Action, and API route. For shared resources (e.g. `ShoppingList` + `ShoppingListCollaborator`), authorization must check owner-or-collaborator, not just `userId` equality — formalize this as a helper (e.g. `requireShoppingListAccess`) rather than repeating the check ad hoc.
 9. **Query keys are centralized** — All React Query keys are defined in `src/lib/queryKeys.ts`. Never hardcode query key arrays.
