@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -35,11 +36,24 @@ function InnerApp({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
+  // NextAuth's `status` also flips to 'loading' for the round trip of a plain
+  // useSession().update() call (e.g. a profile save patching name/email into the
+  // session) — not just the initial hydration. Gating on `status === 'loading'`
+  // alone would unmount the whole app on every such update, discarding any
+  // in-flight client state (a form that was just saved, an open dialog). Latch
+  // once the first real session value has resolved — set during render (React's
+  // sanctioned pattern for deriving state from a prop/value change) so later
+  // 'loading' blips from update() don't tear the tree down again.
+  const [hasHydrated, setHasHydrated] = useState(false);
+  if (!hasHydrated && status !== 'loading') {
+    setHasHydrated(true);
+  }
+
   const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 
-  // Only block protected routes while session hydrates.
+  // Only block protected routes while session hydrates for the first time.
   // Public pages (login, register) render immediately.
-  if (status === 'loading' && !isPublicRoute) {
+  if (status === 'loading' && !hasHydrated && !isPublicRoute) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>

@@ -40,8 +40,17 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: 'jwt' },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) token.user = user as typeof token.user;
+
+      // Profile edits call useSession().update({ name, email }) so the sidebar and
+      // dashboard reflect the new values without forcing a re-login.
+      if (trigger === 'update' && token.user && session) {
+        const patch = session as Partial<{ name: string | null; email: string }>;
+        if (patch.name !== undefined) token.user.name = patch.name;
+        if (patch.email !== undefined) token.user.email = patch.email;
+      }
+
       return token;
     },
     async session({ session, token }) {

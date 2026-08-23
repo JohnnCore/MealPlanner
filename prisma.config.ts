@@ -6,6 +6,7 @@ type PrismaConfig = {
   schema: string;
   migrations: {
     path: string;
+    seed: string;
   };
   datasource: {
     url: string;
@@ -27,6 +28,7 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    seed: 'node prisma/seed.mts',
   },
   datasource: {
     url: env('DATABASE_URL'),
