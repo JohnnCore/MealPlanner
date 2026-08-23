@@ -1,5 +1,7 @@
 import type { CategoryColor, ListColor } from '@prisma/client';
 
+export { UNIT_DISPLAY, UNIT_OPTIONS } from '@/lib/unit-constants';
+
 /* -- Emoji icons available in the category picker -- */
 export const CATEGORY_ICONS = [
   '🥬',
@@ -15,22 +17,6 @@ export const CATEGORY_ICONS = [
   '🥐',
   '🥗',
 ] as const;
-
-/* -- Unit labels for the select dropdown (maps UnitType → display) -- */
-export const UNIT_OPTIONS = [
-  { value: 'PIECE', label: 'pcs' },
-  { value: 'UNIT', label: 'unit' },
-  { value: 'GRAM', label: 'g' },
-  { value: 'KILOGRAM', label: 'kg' },
-  { value: 'MILLILITER', label: 'ml' },
-  { value: 'LITER', label: 'L' },
-  { value: 'TABLESPOON', label: 'tbsp' },
-  { value: 'TEASPOON', label: 'tsp' },
-] as const;
-
-export const UNIT_DISPLAY: Record<string, string> = Object.fromEntries(
-  UNIT_OPTIONS.map(u => [u.value, u.label]),
-);
 
 /* -- Color theme config -- */
 

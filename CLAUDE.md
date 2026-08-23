@@ -185,20 +185,26 @@ Client Component → React Query (useQuery/useMutation) → lib/api/<domain>.ts 
 
 ### 3.4 Domain / Application Services (`services/`)
 
-`services/` holds **server-side** business logic that is more than a single Prisma call — orchestration across multiple `server/<domain>/` functions, external API calls (OpenAI), or domain rules (allergy filtering, missing-ingredient calculation). It is never a client-side fetch wrapper.
+`services/` holds **server-side** business logic that is more than a single Prisma call — orchestration across multiple `server/<domain>/` functions, external API calls (Gemini), or domain rules (allergy filtering, missing-ingredient calculation). It is never a client-side fetch wrapper.
 
 ```
-actions/recipes/actions.ts (generateRecipes)
+actions/recipes/actions.ts (generateRecipeAction)
         │
         ▼
-services/recipeGenerator.ts     # calls OpenAI, applies allergy rules, computes missing ingredients
+services/recipeGenerator.ts     # calls services/ai.ts (Gemini), persists, logs the AIGeneration
         │
         ▼
-server/pantry/queries.ts + server/recipes/mutations.ts + server/ai/mutations.ts
+services/ai.ts (Gemini REST client) + server/recipes/mutations.ts + server/ai/mutations.ts
         │
         ▼
 Prisma
 ```
+
+This is the **actual, built** shape — not aspirational. `services/ai.ts` is the one Gemini
+client (raw `fetch`, no SDK dependency); every AI feature calls it rather than hitting
+`generativelanguage.googleapis.com` directly. Pantry-aware matching (`server/pantry/`) and
+allergy/diet filtering are deferred until pantry data and the allergy rules exist — see
+`services/recipeGenerator.ts`'s doc comment for where they slot in.
 
 - Only create a `services/<domain>.ts` file when logic genuinely spans multiple data-access calls or talks to an external system — a single `create`/`update` call does not need a service, call `server/<domain>/mutations.ts` directly from the action
 - Services are called from Server Actions and API routes, never directly from components or hooks
@@ -296,9 +302,10 @@ Prisma
 
 ### 4.9 Domain Services (services/)
 
-- Create `src/services/<domain>.ts` only when logic spans multiple `server/` calls, calls an external API (OpenAI), or encodes non-trivial business rules — not for a plain single-table CRUD wrapper
-- `services/profile.ts` is the reference example: it checks email uniqueness against `server/auth/queries.ts` before writing through `server/profile/mutations.ts`, verifies a bcrypt hash before a password change, and confirms the typed email before a cascade delete
-- Throw a domain error subclass (e.g. `ProfileError`) for expected, user-facing failures. The calling action catches it and returns `{ error: e.message }`; anything else re-throws as a real 500 rather than being flattened into a friendly string
+- Create `src/services/<domain>.ts` only when logic spans multiple `server/` calls, calls an external API (Gemini), or encodes non-trivial business rules — not for a plain single-table CRUD wrapper
+- `services/profile.ts` is the reference example for cross-domain orchestration: it checks email uniqueness against `server/auth/queries.ts` before writing through `server/profile/mutations.ts`, verifies a bcrypt hash before a password change, and confirms the typed email before a cascade delete
+- `services/ai.ts` + `services/recipeGenerator.ts` are the reference example for calling an external API: `ai.ts` is the single Gemini REST client (plain `fetch`, structured output via `generationConfig.responseSchema` derived from the Prisma enums so it can't drift from what the DB accepts); `recipeGenerator.ts` calls it, persists via `server/recipes/mutations.ts`, and logs the call via `server/ai/mutations.ts`. Add new AI features by calling `ai.ts`, not by hitting `generativelanguage.googleapis.com` from a second call site
+- Throw a domain error subclass (e.g. `ProfileError`, `AIGenerationError`) for expected, user-facing failures. The calling action catches it and returns `{ error: e.message }`; anything else re-throws as a real 500 rather than being flattened into a friendly string
 - Services are plain async functions called from `actions/` or `app/api/`, never from components or hooks directly
 - Services call `server/<domain>/` for data access — they never import Prisma directly
 
@@ -343,16 +350,16 @@ Generated UI code is a **visual spec, not a drop-in component**. Before committi
 
 ### Domain Models
 
-| Domain         | Models                                                                             |
-| -------------- | ---------------------------------------------------------------------------------- |
-| User & Auth    | `User`, `Allergy`, `UserAllergy`                                                   |
-| Profile        | `User` (diet, servings, leftovers, notification prefs) + `UserAllergy` selection   |
-| Ingredients    | `Ingredient`                                                                       |
-| Pantry         | `PantryItem`                                                                       |
-| Recipes        | `Recipe`, `RecipeIngredient`, `RecipeFavorite`                                     |
-| Meal Planning  | `MealPlan`                                                                         |
-| Shopping Lists | `ShoppingList`, `ShoppingCategory`, `ShoppingListItem`, `ShoppingListCollaborator` |
-| AI             | `AIGeneration`                                                                     |
+| Domain         | Models                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| User & Auth    | `User`, `Allergy`, `UserAllergy`                                                         |
+| Profile        | `User` (diet, servings, leftovers, notification prefs) + `UserAllergy` selection         |
+| Ingredients    | `Ingredient`                                                                             |
+| Pantry         | `PantryItem`                                                                             |
+| Recipes        | `Recipe` (incl. `difficulty`, `cookTimeMinutes`), `RecipeIngredient`, `RecipeFavorite`   |
+| Meal Planning  | `MealPlan`                                                                               |
+| Shopping Lists | `ShoppingList`, `ShoppingCategory`, `ShoppingListItem`, `ShoppingListCollaborator`       |
+| AI             | `AIGeneration` — audit log of every `services/ai.ts` call (prompt, raw response, tokens) |
 
 ---
 
@@ -412,14 +419,15 @@ When building a new domain feature, follow this order:
 
 ## 8. Environment Variables
 
-| Variable             | Required | Description                                    |
-| -------------------- | -------- | ---------------------------------------------- |
-| `DATABASE_URL`       | Yes      | PostgreSQL connection string                   |
-| `NEXTAUTH_SECRET`    | Yes      | Secret for JWT signing                         |
-| `NEXTAUTH_URL`       | No       | Base URL (defaults to `http://localhost:3000`) |
-| `PG_MAX_POOL_SIZE`   | No       | Max PG pool connections (default: 10)          |
-| `PG_IDLE_TIMEOUT_MS` | No       | Pool idle timeout (default: 30000)             |
-| `PG_CONN_TIMEOUT_MS` | No       | Pool connection timeout (default: 2000)        |
+| Variable             | Required | Description                                           |
+| -------------------- | -------- | ----------------------------------------------------- |
+| `DATABASE_URL`       | Yes      | PostgreSQL connection string                          |
+| `NEXTAUTH_SECRET`    | Yes      | Secret for JWT signing                                |
+| `GEMINI_API_KEY`     | Yes      | Google Generative Language API key — `services/ai.ts` |
+| `NEXTAUTH_URL`       | No       | Base URL (defaults to `http://localhost:3000`)        |
+| `PG_MAX_POOL_SIZE`   | No       | Max PG pool connections (default: 10)                 |
+| `PG_IDLE_TIMEOUT_MS` | No       | Pool idle timeout (default: 30000)                    |
+| `PG_CONN_TIMEOUT_MS` | No       | Pool connection timeout (default: 2000)               |
 
 ---
 
@@ -453,3 +461,13 @@ npm run format:check  # Check formatting
 10. **One hook file per feature** — Keep hooks small and focused. Compose them in page-level orchestrator hooks.
 11. **Types should not duplicate Prisma models** — Import Prisma-generated types/enums directly. Only hand-write a type in `src/types/<domain>.ts` when it genuinely diverges from the Prisma shape (a DTO with joins or computed fields).
 12. **Layer-oriented structure is fine at current scale** — `components/`, `hooks/`, `actions/`, `server/`, `services/`, `types/` grouped by domain subfolder is the current structure and is sustainable for now. If a domain's logic ends up spread thin across all of these directories as the app grows, consider consolidating into a `features/<domain>/` folder (colocating actions, components, queries, mutations, hooks, schemas, types per domain) — but this is a deliberate future migration, not a rule to apply today.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
