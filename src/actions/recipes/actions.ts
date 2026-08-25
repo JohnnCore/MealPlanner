@@ -14,7 +14,8 @@ export async function generateRecipeAction(input: unknown): Promise<ActionResult
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid request' };
 
   try {
-    return { success: true, data: await generateAndSaveRecipe(userId, parsed.data.prompt) };
+    const data = await generateAndSaveRecipe(userId, parsed.data.prompt, parsed.data.servings);
+    return { success: true, data };
   } catch (e) {
     if (e instanceof AIGenerationError) return { error: e.message };
     throw e;

@@ -9,9 +9,14 @@ import { Button } from '@/components/ui/button';
 import { useRecipesPage } from '@/hooks/recipes/useRecipesPage';
 import { DIFFICULTIES, DIFFICULTY_LABELS } from '@/lib/recipe-constants';
 import { cn } from '@/lib/utils';
-import type { RecipeDTO } from '@/types/recipes';
+import type { RecipeDietarySummaryDTO, RecipeDTO } from '@/types/recipes';
 
-export function RecipesClient({ initialRecipes }: { initialRecipes: RecipeDTO[] }) {
+interface RecipesClientProps {
+  initialRecipes: RecipeDTO[];
+  dietarySummary: RecipeDietarySummaryDTO;
+}
+
+export function RecipesClient({ initialRecipes, dietarySummary }: RecipesClientProps) {
   const {
     filteredRecipes,
     difficultyFilter,
@@ -91,6 +96,7 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: RecipeDTO[] 
       )}
 
       <GenerateRecipeDialog
+        dietarySummary={dietarySummary}
         isGenerating={isGenerating}
         open={generateOpen}
         onGenerate={handleGenerate}

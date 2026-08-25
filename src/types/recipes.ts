@@ -1,4 +1,4 @@
-import type { IngredientCategory, RecipeDifficulty, UnitType } from '@prisma/client';
+import type { DietType, IngredientCategory, RecipeDifficulty, UnitType } from '@prisma/client';
 
 /** One ingredient line on a recipe — flattens the `RecipeIngredient` join to a display-ready row. */
 export interface RecipeIngredientDTO {
@@ -18,6 +18,13 @@ export interface RecipeDTO {
   isAIGenerated: boolean;
   ingredients: RecipeIngredientDTO[];
   createdAt: string;
+}
+
+/** What the generate dialog needs from the profile to prefill/explain a request. */
+export interface RecipeDietarySummaryDTO {
+  defaultServings: number;
+  dietType: DietType;
+  allergyNames: string[];
 }
 
 /** Structured shape requested from Gemini via `responseSchema` — see `services/ai.ts`. */

@@ -1,5 +1,6 @@
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import vitestPlugin from '@vitest/eslint-plugin';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
@@ -72,7 +73,10 @@ const eslintConfig = defineConfig([
         'error',
         { checkFragmentShorthand: true, checkKeyMustBeforeSpread: true, warnOnDuplicates: true },
       ],
-      'react/jsx-sort-props': ['warn', { callbacksLast: true, shorthandFirst: true, reservedFirst: true }],
+      'react/jsx-sort-props': [
+        'warn',
+        { callbacksLast: true, shorthandFirst: true, reservedFirst: true },
+      ],
       // 'function-declaration', not 'arrow-function' — every component in this codebase
       // (including every Next.js page/layout special file) is `export function X()` /
       // `export default function X()`. Enforcing arrow-function would fight the existing
@@ -105,8 +109,18 @@ const eslintConfig = defineConfig([
       // onSubmit={handleSubmit(onSubmit)} from react-hook-form) is normal, idiomatic React;
       // the DOM/React event system doesn't care about the returned promise. Keep the rule
       // active for the genuinely risky cases (promise used where a boolean is expected, etc.)
-      '@typescript-eslint/no-misused-promises': ['warn', { checksVoidReturn: { attributes: false } }],
+      '@typescript-eslint/no-misused-promises': [
+        'warn',
+        { checksVoidReturn: { attributes: false } },
+      ],
     },
+  },
+  // Vitest-specific correctness rules (no-identical-title, valid-expect,
+  // no-disabled-tests, etc.), scoped to test files only. No globals injection needed —
+  // test files import describe/it/expect/vi from 'vitest' explicitly (see tests/).
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx'],
+    ...vitestPlugin.configs.recommended,
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([

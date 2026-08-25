@@ -26,6 +26,26 @@ export async function getAllergies() {
   return prisma.allergy.findMany({ orderBy: { name: 'asc' } });
 }
 
+/** Lean projection for services/recipeGenerator.ts — just what shapes a generation request. */
+export async function getUserDietaryProfile(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      dietType: true,
+      defaultServings: true,
+      allergies: { select: { allergy: { select: { name: true } } } },
+    },
+  });
+
+  if (!user) return null;
+
+  return {
+    dietType: user.dietType,
+    defaultServings: user.defaultServings,
+    allergyNames: user.allergies.map(a => a.allergy.name),
+  };
+}
+
 export async function getAllergyIds(ids: string[]) {
   const rows = await prisma.allergy.findMany({
     where: { id: { in: ids } },

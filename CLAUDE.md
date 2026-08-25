@@ -99,8 +99,15 @@ meal-planner/
 │       └── state/
 │           └── <domain>.ts      # Store state types
 │
+├── tests/                        # Vitest tests — mirrors src/'s path structure, kept separate from it
+│   ├── lib/
+│   │   └── <domain>.test.ts      # e.g. tests/lib/dietary-safety.test.ts tests src/lib/dietary-safety.ts
+│   └── services/
+│       └── <domain>.test.ts
+│
 ├── components.json              # shadcn/ui config
 ├── eslint.config.mjs
+├── vitest.config.mts             # native tsconfig-paths resolution — see §9.5
 ├── next.config.ts               # React Compiler enabled
 ├── prisma.config.ts             # Prisma datasource config
 ├── tsconfig.json                # Path alias: @/* → ./src/*
@@ -191,20 +198,27 @@ Client Component → React Query (useQuery/useMutation) → lib/api/<domain>.ts 
 actions/recipes/actions.ts (generateRecipeAction)
         │
         ▼
-services/recipeGenerator.ts     # calls services/ai.ts (Gemini), persists, logs the AIGeneration
-        │
+services/recipeGenerator.ts     # fetches diet/allergy/servings, calls services/ai.ts,
+        │                         validates the result, persists, logs the AIGeneration
         ▼
-services/ai.ts (Gemini REST client) + server/recipes/mutations.ts + server/ai/mutations.ts
-        │
+services/ai.ts (Gemini REST client) + server/profile/queries.ts + server/recipes/mutations.ts
+        │                             (getUserDietaryProfile)      + server/ai/mutations.ts
         ▼
 Prisma
 ```
 
 This is the **actual, built** shape — not aspirational. `services/ai.ts` is the one Gemini
 client (raw `fetch`, no SDK dependency); every AI feature calls it rather than hitting
-`generativelanguage.googleapis.com` directly. Pantry-aware matching (`server/pantry/`) and
-allergy/diet filtering are deferred until pantry data and the allergy rules exist — see
-`services/recipeGenerator.ts`'s doc comment for where they slot in.
+`generativelanguage.googleapis.com` directly. Diet type, allergies, and servings come from
+`server/profile/queries.ts`'s `getUserDietaryProfile` and are passed to Gemini as hard
+constraints via `services/ai.ts`'s `buildPromptText` (one canonical template — every call
+gets the same field order: request, servings, diet, allergies — rather than ad hoc string
+concatenation per call site). Allergy/diet compliance is also checked in code after the
+fact (`lib/dietary-safety.ts`, category- and keyword-based) with one retry before failing
+outright — for something safety-relevant like a food allergy, trusting the prompt alone
+isn't enough. Pantry-aware "what can I make right now" matching (`server/pantry/`) is
+still deferred — there's no pantry data yet — see `services/recipeGenerator.ts`'s doc
+comment for where it slots in.
 
 - Only create a `services/<domain>.ts` file when logic genuinely spans multiple data-access calls or talks to an external system — a single `create`/`update` call does not need a service, call `server/<domain>/mutations.ts` directly from the action
 - Services are called from Server Actions and API routes, never directly from components or hooks
@@ -443,7 +457,26 @@ npm run lint:fix      # Auto-fix lint issues
 npm run typecheck     # TypeScript type checking
 npm run format        # Format with Prettier
 npm run format:check  # Check formatting
+npm test              # Run the Vitest test suite once
+npm run test:watch    # Vitest in watch mode
 ```
+
+---
+
+## 9.5 Testing (Vitest)
+
+- **Why Vitest, not Jest**: the project started on Jest (`next/jest`) and migrated once the suite was still small enough for the switch to be cheap — faster (esbuild vs. SWC-via-`next/jest`), less config (native tsconfig-paths resolution instead of a hand-written alias map), and a nicer watch mode. Nothing under test touches React components or a Next-specific API, so `next/jest`'s main selling point (CSS/image mocking, bundler parity) wasn't buying anything here. Re-litigate this only if component testing needs actually show up.
+- **Config**: `vitest.config.mts` at the repo root. `resolve.tsconfigPaths: true` is Vite's native tsconfig-paths resolution (no plugin dependency) — it reads `tsconfig.json`'s `paths` directly, which is exactly what `next/jest` couldn't do reliably. `test.clearMocks: true` clears every mock's call history between tests — without it, `.mock.calls[0]` in one test can silently pick up a call made by an earlier one.
+- **Environment**: `test.environment: 'node'` — every test so far covers server-only logic (`services/`, `lib/`, `server/`), no DOM. Switch to `'jsdom'` (globally or per-file via a `// @vitest-environment jsdom` docblock) when component tests are added; don't flip the whole suite for that.
+- **File convention**: a top-level `tests/` directory that mirrors `src/`'s path structure — `src/lib/dietary-safety.ts` is tested by `tests/lib/dietary-safety.test.ts`, `src/services/ai.ts` by `tests/services/ai.test.ts`, and so on. Test code is kept physically separate from application code (not co-located), so `src/` stays exclusively what ships. Every test file imports the module under test via the `@/` alias (`@/lib/dietary-safety`), never a relative path — the alias survives the file living in a different tree, and it matches this codebase's "always `@/`, never relative" convention (§4.1) instead of fighting it.
+- **Globals**: not enabled. Every test file imports `describe`/`it`/`expect`/`vi`/etc. explicitly from `'vitest'` rather than relying on `test.globals: true` — keeps things working without adding `"vitest/globals"` to tsconfig's `types` (which would narrow global type auto-inclusion for the whole app, not just tests).
+- **ESLint**: `@vitest/eslint-plugin`'s `recommended` config is scoped to `**/*.test.ts(x)` in `eslint.config.mjs` — Vitest-specific correctness rules (`expect-expect`, `no-identical-title`, `valid-expect`, `no-disabled-tests`). No globals config needed on the ESLint side either, for the same reason as above.
+- **What gets mocked vs. left real** — see `tests/services/recipeGenerator.test.ts` and `tests/services/ai.test.ts` as the reference pair:
+  - **Mock the I/O boundary**: anything that hits Prisma (`server/<domain>/queries.ts` / `mutations.ts`) or an external API (`fetch` in `services/ai.ts`) gets `vi.mock()`'d. Tests never touch a real database or make a real network call.
+  - **`@/lib/config` needs mocking too, even indirectly** — it calls `getRequiredEnvVar()` at module load time for `DATABASE_URL`/`NEXTAUTH_SECRET`/`GEMINI_API_KEY`, so importing anything that transitively imports it (directly, or via `vi.importActual` pulling in a real dependency) throws in the test environment unless it's mocked first.
+  - **Leave pure logic real**: `services/recipeGenerator.test.ts` mocks `services/ai.ts`'s network call but uses the real `lib/dietary-safety.ts` functions, driving them with fabricated ingredient lists — that exercises the actual retry/fail-safe branching instead of asserting against a second, hand-rolled mock of what the logic "should" do.
+  - **Preserve real error classes across a mock**: `vi.mock('@/services/ai', async () => ({ ...(await vi.importActual('@/services/ai')), generateRecipeFromPrompt: vi.fn() }))` keeps the real `AIGenerationError` class so `instanceof` checks in the code under test (and in the test's own assertions) still work — mocking the whole module with hand-rolled stand-ins would silently break that. Note the factory is `async` and uses `vi.importActual` (not `vi.mock`'s Jest analogue, `jest.requireActual`, which is synchronous) — Vitest's mock factories support async natively.
+- **Testing style**: assert on behavior/contracts (what a function returns, what it calls downstream with), not on private implementation details — e.g. `ai.test.ts` verifies the prompt Gemini receives by inspecting the mocked `fetch` call's body, rather than exporting the internal `buildPromptText` helper just to unit-test it in isolation.
 
 ---
 
