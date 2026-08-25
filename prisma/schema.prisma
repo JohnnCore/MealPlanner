@@ -52,6 +52,12 @@ enum RecipeVisibility {
   UNLISTED
 }
 
+enum RecipeDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
 enum ShoppingListRole {
   OWNER
   EDITOR
@@ -193,6 +199,8 @@ model Recipe {
   description    String?
   instructions   Json
   servings       Int
+  cookTimeMinutes Int             @default(30)
+  difficulty     RecipeDifficulty @default(EASY)
 
   visibility     RecipeVisibility @default(PRIVATE)
   isTemplate     Boolean          @default(false)

@@ -11,3 +11,4 @@ const getRequiredEnvVar = (name: string): string => {
 export const DATABASE_URL = getRequiredEnvVar('DATABASE_URL');
 export const NEXTAUTH_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 export const NEXTAUTH_SECRET = getRequiredEnvVar('NEXTAUTH_SECRET');
+export const GEMINI_API_KEY = getRequiredEnvVar('GEMINI_API_KEY');

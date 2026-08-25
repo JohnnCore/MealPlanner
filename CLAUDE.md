@@ -99,8 +99,15 @@ meal-planner/
 │       └── state/
 │           └── <domain>.ts      # Store state types
 │
+├── tests/                        # Vitest tests — mirrors src/'s path structure, kept separate from it
+│   ├── lib/
+│   │   └── <domain>.test.ts      # e.g. tests/lib/dietary-safety.test.ts tests src/lib/dietary-safety.ts
+│   └── services/
+│       └── <domain>.test.ts
+│
 ├── components.json              # shadcn/ui config
 ├── eslint.config.mjs
+├── vitest.config.mts             # native tsconfig-paths resolution — see §9.5
 ├── next.config.ts               # React Compiler enabled
 ├── prisma.config.ts             # Prisma datasource config
 ├── tsconfig.json                # Path alias: @/* → ./src/*
@@ -185,20 +192,33 @@ Client Component → React Query (useQuery/useMutation) → lib/api/<domain>.ts 
 
 ### 3.4 Domain / Application Services (`services/`)
 
-`services/` holds **server-side** business logic that is more than a single Prisma call — orchestration across multiple `server/<domain>/` functions, external API calls (OpenAI), or domain rules (allergy filtering, missing-ingredient calculation). It is never a client-side fetch wrapper.
+`services/` holds **server-side** business logic that is more than a single Prisma call — orchestration across multiple `server/<domain>/` functions, external API calls (Gemini), or domain rules (allergy filtering, missing-ingredient calculation). It is never a client-side fetch wrapper.
 
 ```
-actions/recipes/actions.ts (generateRecipes)
+actions/recipes/actions.ts (generateRecipeAction)
         │
         ▼
-services/recipeGenerator.ts     # calls OpenAI, applies allergy rules, computes missing ingredients
-        │
+services/recipeGenerator.ts     # fetches diet/allergy/servings, calls services/ai.ts,
+        │                         validates the result, persists, logs the AIGeneration
         ▼
-server/pantry/queries.ts + server/recipes/mutations.ts + server/ai/mutations.ts
-        │
+services/ai.ts (Gemini REST client) + server/profile/queries.ts + server/recipes/mutations.ts
+        │                             (getUserDietaryProfile)      + server/ai/mutations.ts
         ▼
 Prisma
 ```
+
+This is the **actual, built** shape — not aspirational. `services/ai.ts` is the one Gemini
+client (raw `fetch`, no SDK dependency); every AI feature calls it rather than hitting
+`generativelanguage.googleapis.com` directly. Diet type, allergies, and servings come from
+`server/profile/queries.ts`'s `getUserDietaryProfile` and are passed to Gemini as hard
+constraints via `services/ai.ts`'s `buildPromptText` (one canonical template — every call
+gets the same field order: request, servings, diet, allergies — rather than ad hoc string
+concatenation per call site). Allergy/diet compliance is also checked in code after the
+fact (`lib/dietary-safety.ts`, category- and keyword-based) with one retry before failing
+outright — for something safety-relevant like a food allergy, trusting the prompt alone
+isn't enough. Pantry-aware "what can I make right now" matching (`server/pantry/`) is
+still deferred — there's no pantry data yet — see `services/recipeGenerator.ts`'s doc
+comment for where it slots in.
 
 - Only create a `services/<domain>.ts` file when logic genuinely spans multiple data-access calls or talks to an external system — a single `create`/`update` call does not need a service, call `server/<domain>/mutations.ts` directly from the action
 - Services are called from Server Actions and API routes, never directly from components or hooks
@@ -296,9 +316,10 @@ Prisma
 
 ### 4.9 Domain Services (services/)
 
-- Create `src/services/<domain>.ts` only when logic spans multiple `server/` calls, calls an external API (OpenAI), or encodes non-trivial business rules — not for a plain single-table CRUD wrapper
-- `services/profile.ts` is the reference example: it checks email uniqueness against `server/auth/queries.ts` before writing through `server/profile/mutations.ts`, verifies a bcrypt hash before a password change, and confirms the typed email before a cascade delete
-- Throw a domain error subclass (e.g. `ProfileError`) for expected, user-facing failures. The calling action catches it and returns `{ error: e.message }`; anything else re-throws as a real 500 rather than being flattened into a friendly string
+- Create `src/services/<domain>.ts` only when logic spans multiple `server/` calls, calls an external API (Gemini), or encodes non-trivial business rules — not for a plain single-table CRUD wrapper
+- `services/profile.ts` is the reference example for cross-domain orchestration: it checks email uniqueness against `server/auth/queries.ts` before writing through `server/profile/mutations.ts`, verifies a bcrypt hash before a password change, and confirms the typed email before a cascade delete
+- `services/ai.ts` + `services/recipeGenerator.ts` are the reference example for calling an external API: `ai.ts` is the single Gemini REST client (plain `fetch`, structured output via `generationConfig.responseSchema` derived from the Prisma enums so it can't drift from what the DB accepts); `recipeGenerator.ts` calls it, persists via `server/recipes/mutations.ts`, and logs the call via `server/ai/mutations.ts`. Add new AI features by calling `ai.ts`, not by hitting `generativelanguage.googleapis.com` from a second call site
+- Throw a domain error subclass (e.g. `ProfileError`, `AIGenerationError`) for expected, user-facing failures. The calling action catches it and returns `{ error: e.message }`; anything else re-throws as a real 500 rather than being flattened into a friendly string
 - Services are plain async functions called from `actions/` or `app/api/`, never from components or hooks directly
 - Services call `server/<domain>/` for data access — they never import Prisma directly
 
@@ -343,16 +364,16 @@ Generated UI code is a **visual spec, not a drop-in component**. Before committi
 
 ### Domain Models
 
-| Domain         | Models                                                                             |
-| -------------- | ---------------------------------------------------------------------------------- |
-| User & Auth    | `User`, `Allergy`, `UserAllergy`                                                   |
-| Profile        | `User` (diet, servings, leftovers, notification prefs) + `UserAllergy` selection   |
-| Ingredients    | `Ingredient`                                                                       |
-| Pantry         | `PantryItem`                                                                       |
-| Recipes        | `Recipe`, `RecipeIngredient`, `RecipeFavorite`                                     |
-| Meal Planning  | `MealPlan`                                                                         |
-| Shopping Lists | `ShoppingList`, `ShoppingCategory`, `ShoppingListItem`, `ShoppingListCollaborator` |
-| AI             | `AIGeneration`                                                                     |
+| Domain         | Models                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| User & Auth    | `User`, `Allergy`, `UserAllergy`                                                         |
+| Profile        | `User` (diet, servings, leftovers, notification prefs) + `UserAllergy` selection         |
+| Ingredients    | `Ingredient`                                                                             |
+| Pantry         | `PantryItem`                                                                             |
+| Recipes        | `Recipe` (incl. `difficulty`, `cookTimeMinutes`), `RecipeIngredient`, `RecipeFavorite`   |
+| Meal Planning  | `MealPlan`                                                                               |
+| Shopping Lists | `ShoppingList`, `ShoppingCategory`, `ShoppingListItem`, `ShoppingListCollaborator`       |
+| AI             | `AIGeneration` — audit log of every `services/ai.ts` call (prompt, raw response, tokens) |
 
 ---
 
@@ -412,14 +433,15 @@ When building a new domain feature, follow this order:
 
 ## 8. Environment Variables
 
-| Variable             | Required | Description                                    |
-| -------------------- | -------- | ---------------------------------------------- |
-| `DATABASE_URL`       | Yes      | PostgreSQL connection string                   |
-| `NEXTAUTH_SECRET`    | Yes      | Secret for JWT signing                         |
-| `NEXTAUTH_URL`       | No       | Base URL (defaults to `http://localhost:3000`) |
-| `PG_MAX_POOL_SIZE`   | No       | Max PG pool connections (default: 10)          |
-| `PG_IDLE_TIMEOUT_MS` | No       | Pool idle timeout (default: 30000)             |
-| `PG_CONN_TIMEOUT_MS` | No       | Pool connection timeout (default: 2000)        |
+| Variable             | Required | Description                                           |
+| -------------------- | -------- | ----------------------------------------------------- |
+| `DATABASE_URL`       | Yes      | PostgreSQL connection string                          |
+| `NEXTAUTH_SECRET`    | Yes      | Secret for JWT signing                                |
+| `GEMINI_API_KEY`     | Yes      | Google Generative Language API key — `services/ai.ts` |
+| `NEXTAUTH_URL`       | No       | Base URL (defaults to `http://localhost:3000`)        |
+| `PG_MAX_POOL_SIZE`   | No       | Max PG pool connections (default: 10)                 |
+| `PG_IDLE_TIMEOUT_MS` | No       | Pool idle timeout (default: 30000)                    |
+| `PG_CONN_TIMEOUT_MS` | No       | Pool connection timeout (default: 2000)               |
 
 ---
 
@@ -435,7 +457,26 @@ npm run lint:fix      # Auto-fix lint issues
 npm run typecheck     # TypeScript type checking
 npm run format        # Format with Prettier
 npm run format:check  # Check formatting
+npm test              # Run the Vitest test suite once
+npm run test:watch    # Vitest in watch mode
 ```
+
+---
+
+## 9.5 Testing (Vitest)
+
+- **Why Vitest, not Jest**: the project started on Jest (`next/jest`) and migrated once the suite was still small enough for the switch to be cheap — faster (esbuild vs. SWC-via-`next/jest`), less config (native tsconfig-paths resolution instead of a hand-written alias map), and a nicer watch mode. Nothing under test touches React components or a Next-specific API, so `next/jest`'s main selling point (CSS/image mocking, bundler parity) wasn't buying anything here. Re-litigate this only if component testing needs actually show up.
+- **Config**: `vitest.config.mts` at the repo root. `resolve.tsconfigPaths: true` is Vite's native tsconfig-paths resolution (no plugin dependency) — it reads `tsconfig.json`'s `paths` directly, which is exactly what `next/jest` couldn't do reliably. `test.clearMocks: true` clears every mock's call history between tests — without it, `.mock.calls[0]` in one test can silently pick up a call made by an earlier one.
+- **Environment**: `test.environment: 'node'` — every test so far covers server-only logic (`services/`, `lib/`, `server/`), no DOM. Switch to `'jsdom'` (globally or per-file via a `// @vitest-environment jsdom` docblock) when component tests are added; don't flip the whole suite for that.
+- **File convention**: a top-level `tests/` directory that mirrors `src/`'s path structure — `src/lib/dietary-safety.ts` is tested by `tests/lib/dietary-safety.test.ts`, `src/services/ai.ts` by `tests/services/ai.test.ts`, and so on. Test code is kept physically separate from application code (not co-located), so `src/` stays exclusively what ships. Every test file imports the module under test via the `@/` alias (`@/lib/dietary-safety`), never a relative path — the alias survives the file living in a different tree, and it matches this codebase's "always `@/`, never relative" convention (§4.1) instead of fighting it.
+- **Globals**: not enabled. Every test file imports `describe`/`it`/`expect`/`vi`/etc. explicitly from `'vitest'` rather than relying on `test.globals: true` — keeps things working without adding `"vitest/globals"` to tsconfig's `types` (which would narrow global type auto-inclusion for the whole app, not just tests).
+- **ESLint**: `@vitest/eslint-plugin`'s `recommended` config is scoped to `**/*.test.ts(x)` in `eslint.config.mjs` — Vitest-specific correctness rules (`expect-expect`, `no-identical-title`, `valid-expect`, `no-disabled-tests`). No globals config needed on the ESLint side either, for the same reason as above.
+- **What gets mocked vs. left real** — see `tests/services/recipeGenerator.test.ts` and `tests/services/ai.test.ts` as the reference pair:
+  - **Mock the I/O boundary**: anything that hits Prisma (`server/<domain>/queries.ts` / `mutations.ts`) or an external API (`fetch` in `services/ai.ts`) gets `vi.mock()`'d. Tests never touch a real database or make a real network call.
+  - **`@/lib/config` needs mocking too, even indirectly** — it calls `getRequiredEnvVar()` at module load time for `DATABASE_URL`/`NEXTAUTH_SECRET`/`GEMINI_API_KEY`, so importing anything that transitively imports it (directly, or via `vi.importActual` pulling in a real dependency) throws in the test environment unless it's mocked first.
+  - **Leave pure logic real**: `services/recipeGenerator.test.ts` mocks `services/ai.ts`'s network call but uses the real `lib/dietary-safety.ts` functions, driving them with fabricated ingredient lists — that exercises the actual retry/fail-safe branching instead of asserting against a second, hand-rolled mock of what the logic "should" do.
+  - **Preserve real error classes across a mock**: `vi.mock('@/services/ai', async () => ({ ...(await vi.importActual('@/services/ai')), generateRecipeFromPrompt: vi.fn() }))` keeps the real `AIGenerationError` class so `instanceof` checks in the code under test (and in the test's own assertions) still work — mocking the whole module with hand-rolled stand-ins would silently break that. Note the factory is `async` and uses `vi.importActual` (not `vi.mock`'s Jest analogue, `jest.requireActual`, which is synchronous) — Vitest's mock factories support async natively.
+- **Testing style**: assert on behavior/contracts (what a function returns, what it calls downstream with), not on private implementation details — e.g. `ai.test.ts` verifies the prompt Gemini receives by inspecting the mocked `fetch` call's body, rather than exporting the internal `buildPromptText` helper just to unit-test it in isolation.
 
 ---
 
@@ -453,3 +494,13 @@ npm run format:check  # Check formatting
 10. **One hook file per feature** — Keep hooks small and focused. Compose them in page-level orchestrator hooks.
 11. **Types should not duplicate Prisma models** — Import Prisma-generated types/enums directly. Only hand-write a type in `src/types/<domain>.ts` when it genuinely diverges from the Prisma shape (a DTO with joins or computed fields).
 12. **Layer-oriented structure is fine at current scale** — `components/`, `hooks/`, `actions/`, `server/`, `services/`, `types/` grouped by domain subfolder is the current structure and is sustainable for now. If a domain's logic ends up spread thin across all of these directories as the app grows, consider consolidating into a `features/<domain>/` folder (colocating actions, components, queries, mutations, hooks, schemas, types per domain) — but this is a deliberate future migration, not a rule to apply today.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
