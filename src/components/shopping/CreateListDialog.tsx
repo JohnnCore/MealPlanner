@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LIST_COLOR_THEMES, LIST_COLORS } from '@/constants/shopping';
 import { useCreateList, useUpdateList } from '@/hooks/shopping/useShoppingList';
-import { LIST_COLOR_THEMES, LIST_COLORS } from '@/lib/shopping-constants';
 import { cn } from '@/lib/utils';
 import type { ShoppingListSummaryDTO } from '@/types/shopping';
 

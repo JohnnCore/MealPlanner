@@ -74,13 +74,18 @@ meal-planner/
 │   │   ├── config.ts            # Env vars (validated at startup)
 │   │   ├── prisma.ts            # Singleton PrismaClient + PG Pool
 │   │   ├── queryClient.ts       # TanStack Query client factory
-│   │   ├── queryKeys.ts         # Centralized query key registry
-│   │   ├── utils.ts             # Shared utilities (cn, etc.)
-│   │   ├── <domain>-constants.ts # Domain constants & theme maps
+│   │   ├── utils.ts             # cn() — kept here (not utils/) to match shadcn/ui's baked-in `@/lib/utils` import in every generated component
 │   │   ├── api/                 # Thin client-side fetch wrappers — only for domains with API routes (Pattern C)
 │   │   │   └── <domain>.ts
 │   │   └── schemas/             # Zod schemas (validation + types)
 │   │       └── <domain>.ts
+│   │
+│   ├── constants/
+│   │   ├── queryKeys.ts         # Centralized query key registry
+│   │   └── <domain>.ts          # Domain constants & theme maps (pure data, no functions — see §4.8a)
+│   │
+│   ├── utils/
+│   │   └── <domain>.ts          # Pure helper functions, grouped by domain (see §4.8a)
 │   │
 │   ├── server/                  # ⭐ Data-access layer (Prisma calls ONLY)
 │   │   └── <domain>/
@@ -95,13 +100,14 @@ meal-planner/
 │   │
 │   └── types/
 │       ├── next-auth.d.ts       # NextAuth type augmentation
+│       ├── action.ts            # Server Action result contract (ActionResult<T>)
 │       ├── <domain>.ts          # DTOs that don't map 1:1 onto a Prisma model (joins, computed fields)
 │       └── state/
 │           └── <domain>.ts      # Store state types
 │
 ├── tests/                        # Vitest tests — mirrors src/'s path structure, kept separate from it
-│   ├── lib/
-│   │   └── <domain>.test.ts      # e.g. tests/lib/dietary-safety.test.ts tests src/lib/dietary-safety.ts
+│   ├── utils/
+│   │   └── <domain>.test.ts      # e.g. tests/utils/dietarySafety.test.ts tests src/utils/dietarySafety.ts
 │   └── services/
 │       └── <domain>.test.ts
 │
@@ -176,7 +182,7 @@ Client Component → React Query (useQuery/useMutation) → lib/api/<domain>.ts 
 - API routes live in `src/app/api/<domain>/`
 - Client-side fetch wrappers live in `src/lib/api/<domain>.ts`
 - React Query hooks live in `src/hooks/<domain>/`
-- Query keys are centralized in `src/lib/queryKeys.ts`
+- Query keys are centralized in `src/constants/queryKeys.ts`
 - Do **not** use a Server Action as a client-side `queryFn` — Server Actions are for mutations/commands, not for React Query's query/refetch model
 
 ### 3.3 When to Use Which
@@ -214,7 +220,7 @@ client (raw `fetch`, no SDK dependency); every AI feature calls it rather than h
 constraints via `services/ai.ts`'s `buildPromptText` (one canonical template — every call
 gets the same field order: request, servings, diet, allergies — rather than ad hoc string
 concatenation per call site). Allergy/diet compliance is also checked in code after the
-fact (`lib/dietary-safety.ts`, category- and keyword-based) with one retry before failing
+fact (`utils/dietarySafety.ts`, category- and keyword-based) with one retry before failing
 outright — for something safety-relevant like a food allergy, trusting the prompt alone
 isn't enough. Pantry-aware "what can I make right now" matching (`server/pantry/`) is
 still deferred — there's no pantry data yet — see `services/recipeGenerator.ts`'s doc
@@ -295,7 +301,7 @@ comment for where it slots in.
   onError  → rollback from context
   onSettled → invalidate queries
   ```
-- Query keys come from `queryKeys` object in `@/lib/queryKeys.ts` — never hardcode key arrays
+- Query keys come from `queryKeys` object in `@/constants/queryKeys.ts` — never hardcode key arrays
 - A feature can use `useMutation` **without** owning any `useQuery` — `hooks/profile/useProfile.ts` does this purely for the pending/error lifecycle and the global toasts, since the profile page's initial data comes from its Server Component. Don't add an API route or a query key just to make a mutation hook feel complete
 - **Toast notifications are global, not per-hook.** `lib/queryClient.ts` registers a `MutationCache` with `onSuccess`/`onError` that read `mutation.meta.successMessage` / `mutation.meta.errorMessage` (typed via `types/react-query.d.ts`) and call `sonner`'s `toast.success`/`toast.error`. To add feedback to a mutation, add `meta: { successMessage: '...', errorMessage: '...' }` to its `useMutation(...)` call — don't call `toast()` directly inside `onSuccess`/`onError`, and don't build a new notification hook per feature
 - Omit `meta.successMessage` for high-frequency, low-stakes mutations that already have their own visual feedback (e.g. a checkbox toggle) — a toast there is noise, not signal. Always set `errorMessage` (or accept the thrown error's own message as the fallback) so failures are never silent
@@ -313,6 +319,16 @@ comment for where it slots in.
 - Prisma-generated enums and models can be imported directly from `@prisma/client` — **do not** hand-write a type that just duplicates a Prisma model shape
 - Only define a type in `src/types/<domain>.ts` when it genuinely differs from the Prisma shape (a join, a computed field, an aggregate) — e.g. `PantryItemDTO` that nests `ingredient: { id, name }` instead of a raw foreign key
 - Keep types close to usage — if only used in one file, define inline
+- A type that only exists to shape a domain constant map (e.g. `ColorTheme` in `types/shopping.ts`, used by `COLOR_THEMES` in `constants/shopping.ts`) still belongs here, not next to the constant — import it into the constants file rather than declaring it inline there
+
+### 4.8a Constants & Utils
+
+- Domain constants (enum label maps, theme configs, option lists — no functions) → `src/constants/<domain>.ts`
+- Pure helper functions (no Prisma access, no external calls) → `src/utils/<domain>.ts`
+- A file that used to mix both (e.g. the old `lib/recipe-constants.ts` with `DIFFICULTY_LABELS` + `cardGradientFor()`) is split: the data goes to `constants/`, the function goes to `utils/` and imports the data it needs from `constants/`
+- **Exception: `lib/utils.ts` stays in `lib/`, not `utils/`.** Every shadcn/ui component under `components/ui/` is generated with a hardcoded `import { cn } from '@/lib/utils'`, and those files are read-only (§4.2) — moving `cn` would mean hand-editing every generated component, and `npx shadcn add` would just reintroduce the `@/lib/utils` import on the next component anyway
+- `lib/` itself is not a dumping ground — before adding a new file there, check whether it's actually a constant, a util, a type, a schema, or genuine app infrastructure (auth, prisma, query client, config). Only the last category belongs directly in `lib/`
+- Server Action plumbing (`ActionResult<T>` type + `unwrapAction()`) is split the same way: the type lives in `types/action.ts` (imported by `actions/<domain>/actions.ts`), the function lives in `utils/action.ts` (imported by React Query hooks that wrap a Server Action as a `mutationFn`)
 
 ### 4.9 Domain Services (services/)
 
@@ -414,7 +430,7 @@ When building a new domain feature, follow this order:
 
 - [ ] Create API route(s) in `src/app/api/<domain>/`
 - [ ] Create fetch wrapper(s) in `src/lib/api/<domain>.ts`
-- [ ] Add query keys to `src/lib/queryKeys.ts`
+- [ ] Add query keys to `src/constants/queryKeys.ts`
 - [ ] Create React Query hooks in `src/hooks/<domain>/` — a Server Action can be used as the `mutationFn` even here if only the mutation (not the query) needs React Query
 
 ### Step 7 — UI
@@ -427,7 +443,7 @@ When building a new domain feature, follow this order:
 
 ### Step 8 — Constants (if applicable)
 
-- [ ] Add constants/theme maps in `src/lib/<domain>-constants.ts`
+- [ ] Add constants/theme maps in `src/constants/<domain>.ts`, and any pure helpers in `src/utils/<domain>.ts`
 
 ---
 
@@ -468,13 +484,13 @@ npm run test:watch    # Vitest in watch mode
 - **Why Vitest, not Jest**: the project started on Jest (`next/jest`) and migrated once the suite was still small enough for the switch to be cheap — faster (esbuild vs. SWC-via-`next/jest`), less config (native tsconfig-paths resolution instead of a hand-written alias map), and a nicer watch mode. Nothing under test touches React components or a Next-specific API, so `next/jest`'s main selling point (CSS/image mocking, bundler parity) wasn't buying anything here. Re-litigate this only if component testing needs actually show up.
 - **Config**: `vitest.config.mts` at the repo root. `resolve.tsconfigPaths: true` is Vite's native tsconfig-paths resolution (no plugin dependency) — it reads `tsconfig.json`'s `paths` directly, which is exactly what `next/jest` couldn't do reliably. `test.clearMocks: true` clears every mock's call history between tests — without it, `.mock.calls[0]` in one test can silently pick up a call made by an earlier one.
 - **Environment**: `test.environment: 'node'` — every test so far covers server-only logic (`services/`, `lib/`, `server/`), no DOM. Switch to `'jsdom'` (globally or per-file via a `// @vitest-environment jsdom` docblock) when component tests are added; don't flip the whole suite for that.
-- **File convention**: a top-level `tests/` directory that mirrors `src/`'s path structure — `src/lib/dietary-safety.ts` is tested by `tests/lib/dietary-safety.test.ts`, `src/services/ai.ts` by `tests/services/ai.test.ts`, and so on. Test code is kept physically separate from application code (not co-located), so `src/` stays exclusively what ships. Every test file imports the module under test via the `@/` alias (`@/lib/dietary-safety`), never a relative path — the alias survives the file living in a different tree, and it matches this codebase's "always `@/`, never relative" convention (§4.1) instead of fighting it.
+- **File convention**: a top-level `tests/` directory that mirrors `src/`'s path structure — `src/utils/dietarySafety.ts` is tested by `tests/utils/dietarySafety.test.ts`, `src/services/ai.ts` by `tests/services/ai.test.ts`, and so on. Test code is kept physically separate from application code (not co-located), so `src/` stays exclusively what ships. Every test file imports the module under test via the `@/` alias (`@/utils/dietarySafety`), never a relative path — the alias survives the file living in a different tree, and it matches this codebase's "always `@/`, never relative" convention (§4.1) instead of fighting it.
 - **Globals**: not enabled. Every test file imports `describe`/`it`/`expect`/`vi`/etc. explicitly from `'vitest'` rather than relying on `test.globals: true` — keeps things working without adding `"vitest/globals"` to tsconfig's `types` (which would narrow global type auto-inclusion for the whole app, not just tests).
 - **ESLint**: `@vitest/eslint-plugin`'s `recommended` config is scoped to `**/*.test.ts(x)` in `eslint.config.mjs` — Vitest-specific correctness rules (`expect-expect`, `no-identical-title`, `valid-expect`, `no-disabled-tests`). No globals config needed on the ESLint side either, for the same reason as above.
 - **What gets mocked vs. left real** — see `tests/services/recipeGenerator.test.ts` and `tests/services/ai.test.ts` as the reference pair:
   - **Mock the I/O boundary**: anything that hits Prisma (`server/<domain>/queries.ts` / `mutations.ts`) or an external API (`fetch` in `services/ai.ts`) gets `vi.mock()`'d. Tests never touch a real database or make a real network call.
   - **`@/lib/config` needs mocking too, even indirectly** — it calls `getRequiredEnvVar()` at module load time for `DATABASE_URL`/`NEXTAUTH_SECRET`/`GEMINI_API_KEY`, so importing anything that transitively imports it (directly, or via `vi.importActual` pulling in a real dependency) throws in the test environment unless it's mocked first.
-  - **Leave pure logic real**: `services/recipeGenerator.test.ts` mocks `services/ai.ts`'s network call but uses the real `lib/dietary-safety.ts` functions, driving them with fabricated ingredient lists — that exercises the actual retry/fail-safe branching instead of asserting against a second, hand-rolled mock of what the logic "should" do.
+  - **Leave pure logic real**: `services/recipeGenerator.test.ts` mocks `services/ai.ts`'s network call but uses the real `utils/dietarySafety.ts` functions, driving them with fabricated ingredient lists — that exercises the actual retry/fail-safe branching instead of asserting against a second, hand-rolled mock of what the logic "should" do.
   - **Preserve real error classes across a mock**: `vi.mock('@/services/ai', async () => ({ ...(await vi.importActual('@/services/ai')), generateRecipeFromPrompt: vi.fn() }))` keeps the real `AIGenerationError` class so `instanceof` checks in the code under test (and in the test's own assertions) still work — mocking the whole module with hand-rolled stand-ins would silently break that. Note the factory is `async` and uses `vi.importActual` (not `vi.mock`'s Jest analogue, `jest.requireActual`, which is synchronous) — Vitest's mock factories support async natively.
 - **Testing style**: assert on behavior/contracts (what a function returns, what it calls downstream with), not on private implementation details — e.g. `ai.test.ts` verifies the prompt Gemini receives by inspecting the mocked `fetch` call's body, rather than exporting the internal `buildPromptText` helper just to unit-test it in isolation.
 
@@ -490,10 +506,11 @@ npm run test:watch    # Vitest in watch mode
 6. **Prisma access only through server/** — Never import `prisma` directly in Server Components, Server Actions, API routes, components, hooks, or services. Every DB call must be a named function defined in `src/server/<domain>/queries.ts` (reads) or `src/server/<domain>/mutations.ts` (writes). This keeps the data-access layer testable and co-located. The single exception is `prisma/seed.mts`, which runs outside the app (see §6).
 7. **`services/` is server-side domain logic, not a client fetch layer** — Use it only when an operation spans multiple `server/` calls, hits an external API, or encodes non-trivial business rules (e.g. AI recipe generation). A single-table CRUD action calls `server/` directly; it does not need a service.
 8. **`PrivateRoute` is a UX safety net, not a security boundary** — The actual authorization boundary is server-side: `requireUser()`/`requireUserId()` in every Server Component, Server Action, and API route. For shared resources (e.g. `ShoppingList` + `ShoppingListCollaborator`), authorization must check owner-or-collaborator, not just `userId` equality — formalize this as a helper (e.g. `requireShoppingListAccess`) rather than repeating the check ad hoc.
-9. **Query keys are centralized** — All React Query keys are defined in `src/lib/queryKeys.ts`. Never hardcode query key arrays.
+9. **Query keys are centralized** — All React Query keys are defined in `src/constants/queryKeys.ts`. Never hardcode query key arrays.
 10. **One hook file per feature** — Keep hooks small and focused. Compose them in page-level orchestrator hooks.
 11. **Types should not duplicate Prisma models** — Import Prisma-generated types/enums directly. Only hand-write a type in `src/types/<domain>.ts` when it genuinely diverges from the Prisma shape (a DTO with joins or computed fields).
-12. **Layer-oriented structure is fine at current scale** — `components/`, `hooks/`, `actions/`, `server/`, `services/`, `types/` grouped by domain subfolder is the current structure and is sustainable for now. If a domain's logic ends up spread thin across all of these directories as the app grows, consider consolidating into a `features/<domain>/` folder (colocating actions, components, queries, mutations, hooks, schemas, types per domain) — but this is a deliberate future migration, not a rule to apply today.
+12. **Layer-oriented structure is fine at current scale** — `components/`, `hooks/`, `actions/`, `server/`, `services/`, `types/`, `constants/`, `utils/` grouped by domain subfolder is the current structure and is sustainable for now. If a domain's logic ends up spread thin across all of these directories as the app grows, consider consolidating into a `features/<domain>/` folder (colocating actions, components, queries, mutations, hooks, schemas, types per domain) — but this is a deliberate future migration, not a rule to apply today.
+13. **`lib/` is for app infrastructure only, not a catch-all** — constants go in `constants/<domain>.ts`, pure helper functions go in `utils/<domain>.ts`, and DTOs/domain types go in `types/<domain>.ts` (see §4.8/§4.8a). `lib/` is reserved for things that are genuinely cross-cutting plumbing (auth config, the Prisma client, the query client, env var loading, Zod schemas, API fetch wrappers) — plus the one deliberate exception, `lib/utils.ts`'s `cn()`, kept there because every shadcn/ui component is generated importing it from that exact path.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -4,7 +4,7 @@ import { useGenerateRecipe } from '@/hooks/recipes/useRecipes';
 import type { GenerateRecipeInput } from '@/lib/schemas/recipes';
 import type { RecipeDTO } from '@/types/recipes';
 
-export type DifficultyFilter = 'All' | RecipeDTO['difficulty'];
+type DifficultyFilter = 'All' | RecipeDTO['difficulty'];
 
 export function useRecipesPage(initialRecipes: RecipeDTO[]) {
   const [recipes, setRecipes] = useState<RecipeDTO[]>(initialRecipes);

@@ -1,6 +1,6 @@
 import type { CategoryColor, ListColor } from '@prisma/client';
 
-export { UNIT_DISPLAY, UNIT_OPTIONS } from '@/lib/unit-constants';
+import type { ColorTheme, ListColorTheme } from '@/types/shopping';
 
 /* -- Emoji icons available in the category picker -- */
 export const CATEGORY_ICONS = [
@@ -19,22 +19,6 @@ export const CATEGORY_ICONS = [
 ] as const;
 
 /* -- Color theme config -- */
-
-export interface ColorTheme {
-  label: string;
-  /** Card background (very light tint) */
-  bg: string;
-  /** Header bar / progress bar background */
-  bar: string;
-  /** Border accent */
-  border: string;
-  /** Text color for percentage / accents */
-  text: string;
-  /** Pill background in category picker */
-  pill: string;
-  /** Pill text */
-  pillText: string;
-}
 
 export const COLOR_THEMES: Record<CategoryColor, ColorTheme> = {
   GREEN: {
@@ -114,16 +98,6 @@ export const COLOR_THEMES: Record<CategoryColor, ColorTheme> = {
 export const CATEGORY_COLORS = Object.keys(COLOR_THEMES) as CategoryColor[];
 
 /* -- Shopping list color config -- */
-
-export interface ListColorTheme {
-  label: string;
-  /** Solid background for the selector pill & dot */
-  solid: string;
-  /** Dot color class (for the list dropdown) */
-  dot: string;
-  /** Pill text color */
-  pillText: string;
-}
 
 export const LIST_COLOR_THEMES: Record<ListColor, ListColorTheme> = {
   PRIMARY: {

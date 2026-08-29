@@ -6,8 +6,8 @@ import { GenerateRecipeDialog } from '@/components/recipes/GenerateRecipeDialog'
 import { RecipeCard } from '@/components/recipes/RecipeCard';
 import { RecipeDetailDialog } from '@/components/recipes/RecipeDetailDialog';
 import { Button } from '@/components/ui/button';
+import { DIFFICULTIES, DIFFICULTY_LABELS } from '@/constants/recipe';
 import { useRecipesPage } from '@/hooks/recipes/useRecipesPage';
-import { DIFFICULTIES, DIFFICULTY_LABELS } from '@/lib/recipe-constants';
 import { cn } from '@/lib/utils';
 import type { RecipeDietarySummaryDTO, RecipeDTO } from '@/types/recipes';
 

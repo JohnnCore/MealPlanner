@@ -1,9 +1,10 @@
 import { ChefHat, Clock, Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { cardGradientFor, DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/lib/recipe-constants';
+import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/constants/recipe';
 import { cn } from '@/lib/utils';
 import type { RecipeDTO } from '@/types/recipes';
+import { cardGradientFor } from '@/utils/recipe';
 
 interface RecipeCardProps {
   recipe: RecipeDTO;

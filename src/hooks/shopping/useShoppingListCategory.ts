@@ -5,9 +5,8 @@ import {
   deleteCategoryAction,
   updateCategoryAction,
 } from '@/actions/shopping/actions';
-import { unwrapAction } from '@/lib/actionResult';
+import { queryKeys } from '@/constants/queryKeys';
 import { fetchCategories } from '@/lib/api/shopping';
-import { queryKeys } from '@/lib/queryKeys';
 import type {
   CreateCategoryPayload,
   ShoppingCategoryDTO,
@@ -15,6 +14,7 @@ import type {
   ShoppingListSummaryDTO,
   UpdateCategoryPayload,
 } from '@/types/shopping';
+import { unwrapAction } from '@/utils/action';
 
 /* ---------------------- query ---------------------- */
 

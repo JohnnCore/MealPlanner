@@ -4,9 +4,3 @@
  * unwrap this with unwrapAction() rather than checking `result.error` themselves.
  */
 export type ActionResult<T> = { success: true; data: T } | { error: string };
-
-export async function unwrapAction<T>(resultPromise: Promise<ActionResult<T>>): Promise<T> {
-  const result = await resultPromise;
-  if ('error' in result) throw new Error(result.error);
-  return result.data;
-}

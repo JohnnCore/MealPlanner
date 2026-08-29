@@ -2,7 +2,7 @@ import type { DietType } from '@prisma/client';
 
 import prisma from '@/lib/prisma';
 
-export interface UpdateUserProfileData {
+interface UpdateUserProfileData {
   name?: string;
   email?: string;
   dietType?: DietType;

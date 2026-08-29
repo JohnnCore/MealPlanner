@@ -2,7 +2,6 @@
 
 import type { ShoppingListItem } from '@prisma/client';
 
-import type { ActionResult } from '@/lib/actionResult';
 import { requireUserId } from '@/lib/auth-server';
 import {
   createCategorySchema,
@@ -33,6 +32,7 @@ import {
 import { getCategoryByIdAndUser } from '@/server/shopping/queries/category';
 import { getItemByIdAndOwner, getItemsByShoppingListId } from '@/server/shopping/queries/item';
 import { getShoppingListByIdAndOwner } from '@/server/shopping/queries/list';
+import type { ActionResult } from '@/types/action';
 import type {
   ShoppingCategoryDTO,
   ShoppingListItemDTO,

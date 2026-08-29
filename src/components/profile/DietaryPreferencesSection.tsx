@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { DIET_TYPE_LABELS, DIET_TYPES } from '@/lib/profile-constants';
+import { DIET_TYPE_LABELS, DIET_TYPES } from '@/constants/profile';
 import { MAX_SERVINGS, MIN_SERVINGS, type UpdateProfileFormValues } from '@/lib/schemas/profile';
 
 export function DietaryPreferencesSection({

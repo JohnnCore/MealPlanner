@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { CATEGORY_COLORS, CATEGORY_ICONS, COLOR_THEMES } from '@/constants/shopping';
 import {
   useCreateCategory,
   useDeleteCategory,
@@ -17,7 +18,6 @@ import {
   useUpdateCategory,
 } from '@/hooks/shopping/useShoppingListCategory';
 import { useShoppingListItems } from '@/hooks/shopping/useShoppingListItem';
-import { CATEGORY_COLORS, CATEGORY_ICONS, COLOR_THEMES } from '@/lib/shopping-constants';
 import { cn } from '@/lib/utils';
 import type { ShoppingCategoryDTO } from '@/types/shopping';
 

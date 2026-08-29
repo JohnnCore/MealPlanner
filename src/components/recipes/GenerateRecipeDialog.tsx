@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { DIET_TYPE_LABELS } from '@/lib/profile-constants';
+import { DIET_TYPE_LABELS } from '@/constants/profile';
 import { MAX_SERVINGS, MIN_SERVINGS } from '@/lib/schemas/profile';
 import type { GenerateRecipeInput } from '@/lib/schemas/recipes';
 import type { RecipeDietarySummaryDTO } from '@/types/recipes';

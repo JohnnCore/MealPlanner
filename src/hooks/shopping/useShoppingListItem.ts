@@ -6,9 +6,8 @@ import {
   deleteItemAction,
   updateItemAction,
 } from '@/actions/shopping/actions';
-import { unwrapAction } from '@/lib/actionResult';
+import { queryKeys } from '@/constants/queryKeys';
 import { fetchShoppingList } from '@/lib/api/shopping';
-import { queryKeys } from '@/lib/queryKeys';
 import type {
   CreateItemPayload,
   ShoppingListData,
@@ -16,6 +15,7 @@ import type {
   ShoppingListSummaryDTO,
   UpdateItemPayload,
 } from '@/types/shopping';
+import { unwrapAction } from '@/utils/action';
 
 /* ---------------------- helpers ---------------------- */
 

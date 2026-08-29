@@ -1,7 +1,7 @@
 import { Trash2 } from 'lucide-react';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { UNIT_DISPLAY } from '@/lib/shopping-constants';
+import { UNIT_DISPLAY } from '@/constants/unit';
 import { cn } from '@/lib/utils';
 import type { ShoppingListItemDTO } from '@/types/shopping';
 

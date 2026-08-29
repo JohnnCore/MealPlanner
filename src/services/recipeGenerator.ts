@@ -1,12 +1,12 @@
 import type { Prisma } from '@prisma/client';
 
-import { findAllergenMatches, findDietViolations } from '@/lib/dietary-safety';
 import { createAIGeneration } from '@/server/ai/mutations';
 import { getUserDietaryProfile } from '@/server/profile/queries';
 import { createRecipe } from '@/server/recipes/mutations';
 import { toRecipeDTO } from '@/server/recipes/queries';
 import { AIGenerationError, generateRecipeFromPrompt } from '@/services/ai';
 import type { GeneratedRecipe, RecipeDTO } from '@/types/recipes';
+import { findAllergenMatches, findDietViolations } from '@/utils/dietarySafety';
 
 /**
  * Calls Gemini for a new recipe, persists it (Recipe + RecipeIngredient, upserting the
@@ -15,7 +15,7 @@ import type { GeneratedRecipe, RecipeDTO } from '@/types/recipes';
  * Every call is constrained by the user's profile: `servings` defaults to
  * `defaultServings` (overridable per request), and `dietType` + allergies are passed to
  * Gemini as hard requirements. The response is also checked programmatically
- * (lib/dietary-safety.ts) — the prompt instruction is the primary defense, but for
+ * (utils/dietarySafety.ts) — the prompt instruction is the primary defense, but for
  * something safety-relevant like a food allergy, a second, code-level check that can
  * trigger one retry is worth the ~2s it costs on the rare attempt that needs it.
  *

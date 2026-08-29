@@ -1,7 +1,7 @@
 import { User } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { getInitials } from '@/lib/profile-constants';
+import { getInitials } from '@/utils/profile';
 
 interface ProfileHeaderCardProps {
   name: string;
