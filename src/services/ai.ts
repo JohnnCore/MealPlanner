@@ -70,7 +70,7 @@ const DIET_PROMPT_PHRASES: Partial<Record<DietType, string>> = {
   LOW_CARB: 'low-carb (minimize grains, sugar, and starchy vegetables)',
 };
 
-export interface RecipeGenerationConstraints {
+interface RecipeGenerationConstraints {
   servings: number;
   dietType: DietType;
   allergyNames: string[];

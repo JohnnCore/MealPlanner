@@ -11,10 +11,11 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { cardGradientFor, DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/lib/recipe-constants';
-import { UNIT_DISPLAY } from '@/lib/unit-constants';
+import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/constants/recipe';
+import { UNIT_DISPLAY } from '@/constants/unit';
 import { cn } from '@/lib/utils';
 import type { RecipeDTO } from '@/types/recipes';
+import { cardGradientFor } from '@/utils/recipe';
 
 interface RecipeDetailDialogProps {
   recipe: RecipeDTO | null;

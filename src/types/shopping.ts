@@ -89,3 +89,31 @@ export interface ShoppingListData {
   categories: ShoppingCategoryDTO[];
   items: ShoppingListItemDTO[];
 }
+
+/* -- Color theme config -- */
+
+export interface ColorTheme {
+  label: string;
+  /** Card background (very light tint) */
+  bg: string;
+  /** Header bar / progress bar background */
+  bar: string;
+  /** Border accent */
+  border: string;
+  /** Text color for percentage / accents */
+  text: string;
+  /** Pill background in category picker */
+  pill: string;
+  /** Pill text */
+  pillText: string;
+}
+
+export interface ListColorTheme {
+  label: string;
+  /** Solid background for the selector pill & dot */
+  solid: string;
+  /** Dot color class (for the list dropdown) */
+  dot: string;
+  /** Pill text color */
+  pillText: string;
+}

@@ -5,8 +5,8 @@ import {
   deleteAccountAction,
   updateProfileAction,
 } from '@/actions/profile/actions';
-import { unwrapAction } from '@/lib/actionResult';
 import type { ChangePasswordFormValues, UpdateProfileFormValues } from '@/lib/schemas/profile';
+import { unwrapAction } from '@/utils/action';
 
 /**
  * Profile mutations run through React Query purely for its pending/error lifecycle

@@ -14,9 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { UNIT_OPTIONS } from '@/constants/unit';
 import { useShoppingCategories } from '@/hooks/shopping/useShoppingListCategory';
 import { useCreateItem } from '@/hooks/shopping/useShoppingListItem';
-import { UNIT_OPTIONS } from '@/lib/shopping-constants';
 
 interface AddItemDialogProps {
   open: boolean;

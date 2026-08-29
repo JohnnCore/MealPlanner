@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { LIST_COLOR_THEMES } from '@/lib/shopping-constants';
+import { LIST_COLOR_THEMES } from '@/constants/shopping';
 import { cn } from '@/lib/utils';
 import type { ShoppingListSummaryDTO } from '@/types/shopping';
 

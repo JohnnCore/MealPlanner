@@ -1,10 +1,10 @@
 'use server';
 
-import type { ActionResult } from '@/lib/actionResult';
 import { requireUserId } from '@/lib/auth-server';
 import { generateRecipeSchema } from '@/lib/schemas/recipes';
 import { AIGenerationError } from '@/services/ai';
 import { generateAndSaveRecipe } from '@/services/recipeGenerator';
+import type { ActionResult } from '@/types/action';
 import type { RecipeDTO } from '@/types/recipes';
 
 export async function generateRecipeAction(input: unknown): Promise<ActionResult<RecipeDTO>> {

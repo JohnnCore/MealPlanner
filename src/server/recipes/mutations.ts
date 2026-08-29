@@ -2,14 +2,14 @@ import type { IngredientCategory, RecipeDifficulty, UnitType } from '@prisma/cli
 
 import prisma from '@/lib/prisma';
 
-export interface CreateRecipeIngredientInput {
+interface CreateRecipeIngredientInput {
   name: string;
   quantity: number;
   unit: UnitType;
   category: IngredientCategory;
 }
 
-export interface CreateRecipeInput {
+interface CreateRecipeInput {
   title: string;
   description: string;
   servings: number;

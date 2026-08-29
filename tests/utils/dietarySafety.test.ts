@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { findAllergenMatches, findDietViolations } from '@/lib/dietary-safety';
+import { findAllergenMatches, findDietViolations } from '@/utils/dietarySafety';
 
 describe('findAllergenMatches', () => {
   it('flags an ingredient containing an allergy keyword', () => {

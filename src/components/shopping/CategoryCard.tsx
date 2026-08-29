@@ -1,6 +1,6 @@
 import { Pencil } from 'lucide-react';
 
-import { COLOR_THEMES } from '@/lib/shopping-constants';
+import { COLOR_THEMES } from '@/constants/shopping';
 import { cn } from '@/lib/utils';
 import type { ShoppingCategoryDTO, ShoppingListItemDTO } from '@/types/shopping';
 

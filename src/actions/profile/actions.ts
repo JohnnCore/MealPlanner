@@ -1,6 +1,5 @@
 'use server';
 
-import type { ActionResult } from '@/lib/actionResult';
 import { requireUserId } from '@/lib/auth-server';
 import {
   changePasswordSchema,
@@ -13,6 +12,7 @@ import {
   ProfileError,
   saveUserProfile,
 } from '@/services/profile';
+import type { ActionResult } from '@/types/action';
 import type { UserProfileDTO } from '@/types/profile';
 
 export async function updateProfileAction(input: unknown): Promise<ActionResult<UserProfileDTO>> {

@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { generateRecipeAction } from '@/actions/recipes/actions';
-import { unwrapAction } from '@/lib/actionResult';
 import type { GenerateRecipeInput } from '@/lib/schemas/recipes';
+import { unwrapAction } from '@/utils/action';
 
 /**
  * Mutation-only — there's no useQuery here. The recipe list's initial data comes from

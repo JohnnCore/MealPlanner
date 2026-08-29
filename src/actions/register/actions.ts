@@ -5,10 +5,9 @@ import bcrypt from 'bcryptjs';
 import { type RegisterFormValues, registerSchema } from '@/lib/schemas/auth';
 import { createUser } from '@/server/auth/mutations';
 import { getUserByEmail } from '@/server/auth/queries';
+import type { ActionResult } from '@/types/action';
 
-type RegisterResult = { success: true } | { error: string };
-
-export async function registerAction(values: RegisterFormValues): Promise<RegisterResult> {
+export async function registerAction(values: RegisterFormValues): Promise<ActionResult<void>> {
   const parsed = registerSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -27,7 +26,7 @@ export async function registerAction(values: RegisterFormValues): Promise<Regist
 
   try {
     await createUser(name, email, hashedPassword);
-    return { success: true };
+    return { success: true, data: undefined };
   } catch (err) {
     // Handle unique constraint race (concurrent registrations)
     if (
