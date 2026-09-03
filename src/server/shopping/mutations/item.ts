@@ -9,6 +9,7 @@ export async function createItem(data: {
   unit: UnitType;
   notes: string | null;
   shoppingListId: string;
+  ingredientId: string;
 }) {
   return prisma.shoppingListItem.create({
     data: {
@@ -18,6 +19,7 @@ export async function createItem(data: {
       unit: data.unit,
       notes: data.notes,
       shoppingListId: data.shoppingListId,
+      ingredientId: data.ingredientId,
     },
   });
 }

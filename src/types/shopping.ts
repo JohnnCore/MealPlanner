@@ -1,4 +1,4 @@
-import type { CategoryColor, ListColor, UnitType } from '@prisma/client';
+import type { CategoryColor, IngredientCategory, ListColor, UnitType } from '@prisma/client';
 
 /* -- Shopping list -- */
 
@@ -71,6 +71,11 @@ export interface CreateItemPayload {
   unit: UnitType;
   notes?: string;
   listId?: string;
+  /** Either ingredientId (picking an existing/visible ingredient) or ingredientCategory
+   * (creating a new one) must be set. */
+  ingredientId?: string;
+  ingredientCategory?: IngredientCategory;
+  ingredientIcon?: string;
 }
 
 export interface UpdateItemPayload {

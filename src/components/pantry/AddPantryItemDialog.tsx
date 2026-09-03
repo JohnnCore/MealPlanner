@@ -4,8 +4,8 @@ import type { IngredientCategory, UnitType } from '@prisma/client';
 import { X } from 'lucide-react';
 import { useState } from 'react';
 
-import { IngredientCombobox } from '@/components/pantry/IngredientCombobox';
-import { IngredientCreateFields } from '@/components/pantry/IngredientCreateFields';
+import { IngredientCombobox } from '@/components/ingredients/IngredientCombobox';
+import { IngredientCreateFields } from '@/components/ingredients/IngredientCreateFields';
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

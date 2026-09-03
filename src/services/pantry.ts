@@ -1,9 +1,7 @@
-import { INGREDIENT_CATEGORY_ICONS } from '@/constants/ingredients';
 import type { AddPantryItemInput } from '@/lib/schemas/pantry';
-import { findOrCreateIngredientForUser } from '@/server/ingredients/mutations';
-import { getVisibleIngredientById } from '@/server/ingredients/queries';
 import { createPantryItem, incrementPantryItemQuantity } from '@/server/pantry/mutations';
 import { getPantryItemByUserAndIngredient, toPantryItemDTO } from '@/server/pantry/queries';
+import { IngredientResolutionError, resolveOrCreateIngredient } from '@/services/ingredients';
 import type { PantryItemDTO } from '@/types/pantry';
 
 /** Expected, user-facing failure — actions surface `message` verbatim. */
@@ -20,16 +18,17 @@ export async function addPantryItem(
   userId: string,
   input: AddPantryItemInput,
 ): Promise<PantryItemDTO> {
-  const ingredient = input.ingredientId
-    ? await getVisibleIngredientById(input.ingredientId, userId)
-    : await findOrCreateIngredientForUser(userId, {
-        name: input.name!,
-        category: input.category!,
-        icon: input.icon ?? INGREDIENT_CATEGORY_ICONS[input.category!],
-      });
-
-  if (!ingredient) {
-    throw new PantryError('Ingredient not found');
+  let ingredient;
+  try {
+    ingredient = await resolveOrCreateIngredient(userId, {
+      ingredientId: input.ingredientId,
+      name: input.name ?? '',
+      category: input.category,
+      icon: input.icon,
+    });
+  } catch (e) {
+    if (e instanceof IngredientResolutionError) throw new PantryError(e.message);
+    throw e;
   }
 
   const expiresAt = input.expiresAt ?? null;
