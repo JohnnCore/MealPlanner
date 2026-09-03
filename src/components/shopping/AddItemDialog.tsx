@@ -1,8 +1,10 @@
 'use client';
 
-import type { UnitType } from '@prisma/client';
+import type { IngredientCategory, UnitType } from '@prisma/client';
 import { useState } from 'react';
 
+import { IngredientCombobox } from '@/components/ingredients/IngredientCombobox';
+import { IngredientCreateFields } from '@/components/ingredients/IngredientCreateFields';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -14,9 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { INGREDIENT_CATEGORY_ICONS } from '@/constants/ingredients';
 import { UNIT_OPTIONS } from '@/constants/unit';
 import { useShoppingCategories } from '@/hooks/shopping/useShoppingListCategory';
 import { useCreateItem } from '@/hooks/shopping/useShoppingListItem';
+import type { IngredientSearchResultDTO } from '@/types/ingredients';
 
 interface AddItemDialogProps {
   open: boolean;
@@ -25,34 +29,79 @@ interface AddItemDialogProps {
   listId: string | undefined;
 }
 
+const DEFAULT_INGREDIENT_CATEGORY: IngredientCategory = 'OTHER';
+
 export function AddItemDialog({ open, onOpenChange, listId }: AddItemDialogProps) {
   const { data: categories = [] } = useShoppingCategories();
   const createItem = useCreateItem(listId);
 
-  const [name, setName] = useState('');
+  const [selectedIngredient, setSelectedIngredient] = useState<IngredientSearchResultDTO | null>(
+    null,
+  );
+  const [creatingName, setCreatingName] = useState<string | null>(null);
+  const [ingredientCategory, setIngredientCategory] = useState<IngredientCategory>(
+    DEFAULT_INGREDIENT_CATEGORY,
+  );
+  const [ingredientIcon, setIngredientIcon] = useState(
+    INGREDIENT_CATEGORY_ICONS[DEFAULT_INGREDIENT_CATEGORY],
+  );
+  const [iconManuallySet, setIconManuallySet] = useState(false);
+
   const [categoryId, setCategoryId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState<UnitType>('PIECE');
   const [notes, setNotes] = useState('');
 
   const resetForm = () => {
-    setName('');
+    setSelectedIngredient(null);
+    setCreatingName(null);
+    setIngredientCategory(DEFAULT_INGREDIENT_CATEGORY);
+    setIngredientIcon(INGREDIENT_CATEGORY_ICONS[DEFAULT_INGREDIENT_CATEGORY]);
+    setIconManuallySet(false);
     setCategoryId('');
     setQuantity('1');
     setUnit('PIECE');
     setNotes('');
   };
 
+  const handleCreateNew = (name: string) => {
+    setCreatingName(name);
+    setSelectedIngredient(null);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIngredient(null);
+    setCreatingName(null);
+    setIngredientCategory(DEFAULT_INGREDIENT_CATEGORY);
+    setIngredientIcon(INGREDIENT_CATEGORY_ICONS[DEFAULT_INGREDIENT_CATEGORY]);
+    setIconManuallySet(false);
+  };
+
+  const handleIngredientCategoryChange = (next: IngredientCategory) => {
+    setIngredientCategory(next);
+    if (!iconManuallySet) setIngredientIcon(INGREDIENT_CATEGORY_ICONS[next]);
+  };
+
+  const handleIngredientIconChange = (next: string) => {
+    setIngredientIcon(next);
+    setIconManuallySet(true);
+  };
+
+  const canSubmit = !!(selectedIngredient || creatingName) && !!categoryId;
+
   const handleAdd = () => {
-    if (!name.trim() || !categoryId) return;
+    if (!canSubmit) return;
 
     createItem.mutate(
       {
-        name: name.trim(),
+        name: selectedIngredient ? selectedIngredient.name : creatingName!,
         categoryId,
         quantity: Number(quantity) || 1,
         unit,
         notes: notes.trim() || undefined,
+        ...(selectedIngredient
+          ? { ingredientId: selectedIngredient.id }
+          : { ingredientCategory, ingredientIcon }),
       },
       {
         onSuccess: () => {
@@ -64,24 +113,42 @@ export function AddItemDialog({ open, onOpenChange, listId }: AddItemDialogProps
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={next => {
+        onOpenChange(next);
+        if (!next) resetForm();
+      }}
+    >
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Add New Item</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Name */}
+          {/* Ingredient */}
           <div className="space-y-1.5">
-            <Label htmlFor="item-name">Item Name *</Label>
-            <Input
-              className="border-green-500 focus-visible:ring-green-500/30"
-              id="item-name"
-              placeholder="e.g., Fresh Tomatoes"
-              value={name}
-              onChange={e => setName(e.target.value)}
+            <Label>Ingredient *</Label>
+            <IngredientCombobox
+              creatingName={creatingName}
+              selected={selectedIngredient}
+              onClearSelection={handleClearSelection}
+              onCreateNew={handleCreateNew}
+              onSelect={ingredient => {
+                setSelectedIngredient(ingredient);
+                setCreatingName(null);
+              }}
             />
           </div>
+
+          {creatingName ? (
+            <IngredientCreateFields
+              category={ingredientCategory}
+              icon={ingredientIcon}
+              onCategoryChange={handleIngredientCategoryChange}
+              onIconChange={handleIngredientIconChange}
+            />
+          ) : null}
 
           {/* Category */}
           <div className="space-y-1.5">
@@ -148,7 +215,7 @@ export function AddItemDialog({ open, onOpenChange, listId }: AddItemDialogProps
           <div className="flex gap-2">
             <Button
               className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!name.trim() || !categoryId || createItem.isPending}
+              disabled={!canSubmit || createItem.isPending}
               onClick={handleAdd}
             >
               Add Item

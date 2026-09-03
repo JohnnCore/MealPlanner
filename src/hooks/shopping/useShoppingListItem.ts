@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   clearCheckedItemsAction,
+  completeCheckedItemsAction,
   createItemAction,
   deleteItemAction,
   updateItemAction,
@@ -238,6 +239,55 @@ export function useClearCheckedItems(listId: string | undefined) {
       }));
 
       return { prevList, prevLists };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prevList) qc.setQueryData(key, ctx.prevList);
+      if (ctx?.prevLists) qc.setQueryData(queryKeys.shopping.lists(), ctx.prevLists);
+    },
+  });
+}
+
+/**
+ * Adds every checked item to the user's Pantry (see services/shopping.ts's
+ * completeCheckedItems), then clears them off the list — same optimistic-clear shape as
+ * useClearCheckedItems, plus invalidating the Pantry items query since new rows exist there.
+ */
+export function useCompleteCheckedItems(listId: string | undefined) {
+  const qc = useQueryClient();
+  const key = queryKeys.shopping.list(listId ?? '');
+
+  return useMutation({
+    mutationFn: () => {
+      if (!listId) throw new Error('No shopping list selected');
+      return unwrapAction(completeCheckedItemsAction(listId));
+    },
+    meta: {
+      successMessage: 'Added to pantry',
+      errorMessage: 'Failed to add items to pantry',
+    },
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: key });
+      const prevList = qc.getQueryData<ShoppingListData>(key);
+
+      const checkedCount = prevList?.items.filter(i => i.checked).length ?? 0;
+
+      if (prevList) {
+        qc.setQueryData<ShoppingListData>(key, {
+          ...prevList,
+          items: prevList.items.filter(i => !i.checked),
+        });
+      }
+
+      const prevLists = patchListCounts(qc, listId, l => ({
+        ...l,
+        itemCount: l.itemCount - checkedCount,
+        checkedCount: 0,
+      }));
+
+      return { prevList, prevLists };
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.pantry.items() });
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prevList) qc.setQueryData(key, ctx.prevList);

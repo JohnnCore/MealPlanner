@@ -11,6 +11,7 @@ import type {
 import { useCloneList, useShoppingLists } from './useShoppingList';
 import {
   useClearCheckedItems,
+  useCompleteCheckedItems,
   useDeleteItem,
   useShoppingListItems,
   useUpdateItem,
@@ -37,11 +38,13 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
   const updateItem = useUpdateItem(activeListId);
   const deleteItem = useDeleteItem(activeListId);
   const clearChecked = useClearCheckedItems(activeListId);
+  const completeChecked = useCompleteCheckedItems(activeListId);
 
   /* -- Dialog state -- */
   const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [createListOpen, setCreateListOpen] = useState(false);
+  const [completeShoppingOpen, setCompleteShoppingOpen] = useState(false);
   const [editingList, setEditingList] = useState<ShoppingListSummaryDTO | null>(null);
   const [deletingList, setDeletingList] = useState<ShoppingListSummaryDTO | null>(null);
   const [editingCategory, setEditingCategory] = useState<ShoppingCategoryDTO | null>(null);
@@ -49,9 +52,10 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
   /* -- Derived data -- */
   const categories = data?.categories ?? [];
   const items = useMemo(() => data?.items ?? [], [data?.items]);
+  const checkedItemsList = useMemo(() => items.filter(i => i.checked), [items]);
 
   const totalItems = items.length;
-  const checkedItems = items.filter(i => i.checked).length;
+  const checkedItems = checkedItemsList.length;
   const progressPct = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
 
   const itemsByCategory = useMemo(() => {
@@ -120,6 +124,10 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
     clearChecked.mutate();
   }, [clearChecked]);
 
+  const handleCompleteShoppingConfirmed = useCallback(() => {
+    completeChecked.mutate(undefined, { onSuccess: () => setCompleteShoppingOpen(false) });
+  }, [completeChecked]);
+
   const handleEditCategory = useCallback((cat: ShoppingCategoryDTO) => {
     setEditingCategory(cat);
     setManageCategoriesOpen(true);
@@ -150,6 +158,7 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
     itemsByCategory,
     totalItems,
     checkedItems,
+    checkedItemsList,
     progressPct,
 
     /* dialog state */
@@ -163,12 +172,16 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
     editingList,
     deletingList,
     setDeletingList,
+    completeShoppingOpen,
+    setCompleteShoppingOpen,
 
     /* actions */
     handleToggleItem,
     handleDeleteItem,
     handleClearChecked,
+    handleCompleteShoppingConfirmed,
     handleEditCategory,
     isClearingChecked: clearChecked.isPending,
+    isCompletingShopping: completeChecked.isPending,
   };
 }

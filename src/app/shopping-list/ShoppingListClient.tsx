@@ -1,9 +1,10 @@
 'use client';
 
-import { Download, Grid2X2, Plus, Share2, Trash2 } from 'lucide-react';
+import { Download, Grid2X2, PackageCheck, Plus, Share2, Trash2 } from 'lucide-react';
 
 import { AddItemDialog } from '@/components/shopping/AddItemDialog';
 import { CategoryCard } from '@/components/shopping/CategoryCard';
+import { CompleteShoppingDialog } from '@/components/shopping/CompleteShoppingDialog';
 import { CreateListDialog } from '@/components/shopping/CreateListDialog';
 import { DeleteListDialog } from '@/components/shopping/DeleteListDialog';
 import { ManageCategoriesDialog } from '@/components/shopping/ManageCategoriesDialog';
@@ -40,11 +41,16 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
     editingList,
     deletingList,
     setDeletingList,
+    checkedItemsList,
+    completeShoppingOpen,
+    setCompleteShoppingOpen,
     handleToggleItem,
     handleDeleteItem,
     handleClearChecked,
+    handleCompleteShoppingConfirmed,
     handleEditCategory,
     isClearingChecked,
+    isCompletingShopping,
   } = useShoppingListPage(initialLists);
 
   return (
@@ -128,15 +134,25 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
               </Button>
             </div>
             {checkedItems > 0 ? (
-              <Button
-                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
-                disabled={isClearingChecked}
-                variant="outline"
-                onClick={handleClearChecked}
-              >
-                <Trash2 className="size-4" />
-                Clear {checkedItems} Checked
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-700"
+                  variant="outline"
+                  onClick={() => setCompleteShoppingOpen(true)}
+                >
+                  <PackageCheck className="size-4" />
+                  Add to Pantry
+                </Button>
+                <Button
+                  className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
+                  disabled={isClearingChecked}
+                  variant="outline"
+                  onClick={handleClearChecked}
+                >
+                  <Trash2 className="size-4" />
+                  Clear {checkedItems} Checked
+                </Button>
+              </div>
             ) : null}
           </div>
 
@@ -188,6 +204,13 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
         onOpenChange={open => {
           if (!open) setDeletingList(null);
         }}
+      />
+      <CompleteShoppingDialog
+        isPending={isCompletingShopping}
+        items={checkedItemsList}
+        open={completeShoppingOpen}
+        onConfirm={handleCompleteShoppingConfirmed}
+        onOpenChange={setCompleteShoppingOpen}
       />
     </main>
   );

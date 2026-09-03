@@ -1,4 +1,4 @@
-import { CategoryColor, ListColor, UnitType } from '@prisma/client';
+import { CategoryColor, IngredientCategory, ListColor, UnitType } from '@prisma/client';
 import * as z from 'zod';
 
 /* -- Shopping list -- */
@@ -38,14 +38,22 @@ export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
 
 /* -- Item -- */
 
-export const createItemSchema = z.object({
-  name: z.string().trim().min(1, 'Item name is required'),
-  categoryId: z.string().min(1, 'Category is required'),
-  quantity: z.number().positive().optional().default(1),
-  unit: z.nativeEnum(UnitType),
-  notes: z.string().trim().optional(),
-  listId: z.string().optional(),
-});
+export const createItemSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Item name is required'),
+    categoryId: z.string().min(1, 'Category is required'),
+    quantity: z.number().positive().optional().default(1),
+    unit: z.nativeEnum(UnitType),
+    notes: z.string().trim().optional(),
+    listId: z.string().optional(),
+    ingredientId: z.string().min(1).optional(),
+    ingredientCategory: z.nativeEnum(IngredientCategory).optional(),
+    ingredientIcon: z.string().trim().min(1).optional(),
+  })
+  .refine(data => !!data.ingredientId || !!data.ingredientCategory, {
+    message: 'Pick an existing ingredient or provide a category for the new one',
+    path: ['ingredientId'],
+  });
 
 export type CreateItemInput = z.infer<typeof createItemSchema>;
 
