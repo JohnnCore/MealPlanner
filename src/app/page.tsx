@@ -1,14 +1,10 @@
-import { requireUser } from '@/lib/auth-server';
+import { PantryClient } from '@/app/PantryClient';
+import { requireUserId } from '@/lib/auth-server';
+import { getPantryItemsByUserId, toPantryItemDTO } from '@/server/pantry/queries';
 
 export default async function DashboardPage() {
-  const user = await requireUser();
+  const userId = await requireUserId();
+  const items = await getPantryItemsByUserId(userId);
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-8">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <p className="text-muted-foreground">
-        You are signed in as <b>{user.name}</b>. More features coming soon.
-      </p>
-    </main>
-  );
+  return <PantryClient initialItems={items.map(toPantryItemDTO)} />;
 }

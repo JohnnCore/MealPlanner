@@ -19,9 +19,9 @@ import { findAllergenMatches, findDietViolations } from '@/utils/dietarySafety';
  * something safety-relevant like a food allergy, a second, code-level check that can
  * trigger one retry is worth the ~2s it costs on the rare attempt that needs it.
  *
- * Pantry-aware "what can I make right now" scoring is still deferred — there's no pantry
- * data to match against yet. It slots in here once that's ready, without changing the
- * caller's contract.
+ * Pantry-aware "what can I make right now" scoring is still deferred — pantry data now
+ * exists (see server/pantry/), but recipe-matching logic against it isn't implemented
+ * yet. It slots in here once that's ready, without changing the caller's contract.
  */
 export async function generateAndSaveRecipe(
   userId: string,
