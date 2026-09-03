@@ -1,6 +1,7 @@
 import type { IngredientCategory, RecipeDifficulty, UnitType } from '@prisma/client';
 
 import prisma from '@/lib/prisma';
+import { ingredientVisibilityFilter } from '@/server/ingredients/queries';
 
 interface CreateRecipeIngredientInput {
   name: string;
@@ -38,8 +39,13 @@ export async function createRecipe(authorId: string, input: CreateRecipeInput) {
 
     const ingredientIds = await Promise.all(
       uniqueIngredients.map(async ing => {
+        // Scoped to the shared catalog + this author's own private ingredients — never
+        // matches (and so never exposes, via a recipe) another user's private ingredient.
         const existing = await tx.ingredient.findFirst({
-          where: { name: { equals: ing.name, mode: 'insensitive' } },
+          where: {
+            ...ingredientVisibilityFilter(authorId),
+            name: { equals: ing.name, mode: 'insensitive' },
+          },
           select: { id: true },
         });
         if (existing) return existing.id;

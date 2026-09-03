@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', Icon: Home },
+  { href: '/', label: 'My Pantry', Icon: Home },
   { href: '/recipes', label: 'AI Recipes', Icon: Lightbulb },
   { href: '/planner', label: 'Meal Planner', Icon: Calendar },
   { href: '/shopping-list', label: 'Shopping List', Icon: ShoppingCart },

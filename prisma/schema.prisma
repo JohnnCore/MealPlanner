@@ -116,6 +116,7 @@ model User {
 
   allergies       UserAllergy[]
   pantryItems     PantryItem[]
+  createdIngredients Ingredient[]
   recipes         Recipe[]
   mealPlans       MealPlan[]
   shoppingLists       ShoppingList[]
@@ -152,17 +153,24 @@ model UserAllergy {
 
 model Ingredient {
   id          String  @id @default(uuid())
-  name        String  @unique
+  name        String
   category    IngredientCategory
+  icon        String  @default("🥘")
 
   calories    Float?
   protein     Float?
   carbs       Float?
   fats        Float?
 
+  createdByUserId String?
+  createdBy       User?   @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+
   recipeLinks     RecipeIngredient[]
   pantryItems     PantryItem[]
   shoppingItems   ShoppingListItem[]
+
+  @@unique([name, createdByUserId])
+  @@index([createdByUserId])
 }
 
 //////////////////////////////////////////////////////

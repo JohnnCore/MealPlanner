@@ -12,4 +12,16 @@ export const queryKeys = {
     list: (listId: string) => [...queryKeys.shopping.all, 'list', listId] as const,
     categories: () => [...queryKeys.shopping.all, 'categories'] as const,
   },
+
+  /* -- Pantry -- */
+  pantry: {
+    all: ['pantry'] as const,
+    items: () => [...queryKeys.pantry.all, 'items'] as const,
+  },
+
+  /* -- Ingredients -- */
+  ingredients: {
+    all: ['ingredients'] as const,
+    search: (query: string) => [...queryKeys.ingredients.all, 'search', query] as const,
+  },
 } as const;
