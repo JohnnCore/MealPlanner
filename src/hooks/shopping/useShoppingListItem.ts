@@ -114,6 +114,27 @@ export function useCreateItem(listId: string | undefined) {
   });
 }
 
+/**
+ * Adds an item to the user's default shopping list from a context that doesn't have a
+ * specific list open (e.g. the recipe "Cook" dialog) — `createItemAction` resolves the
+ * default list server-side when no `listId` is given. Unlike `useCreateItem`, this isn't
+ * scoped to one list's cache key up front (the target list isn't known until the mutation
+ * resolves), so it invalidates by the real `shoppingListId` the server returns instead of
+ * applying an optimistic update.
+ */
+export function useQuickAddToShoppingList() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateItemPayload) => unwrapAction(createItemAction(payload)),
+    meta: { successMessage: 'Added to shopping list', errorMessage: 'Failed to add item' },
+    onSuccess: created => {
+      void qc.invalidateQueries({ queryKey: queryKeys.shopping.list(created.shoppingListId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.shopping.lists() });
+    },
+  });
+}
+
 export function useUpdateItem(listId: string | undefined) {
   const qc = useQueryClient();
   const key = queryKeys.shopping.list(listId ?? '');

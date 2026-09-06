@@ -1,7 +1,9 @@
 'use client';
 
 import { ChefHat, Clock, Users } from 'lucide-react';
+import { useState } from 'react';
 
+import { CookRecipeDialog } from '@/components/recipes/CookRecipeDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +25,8 @@ interface RecipeDetailDialogProps {
 }
 
 export function RecipeDetailDialog({ recipe, onOpenChange }: RecipeDetailDialogProps) {
+  const [cookOpen, setCookOpen] = useState(false);
+
   return (
     <Dialog open={!!recipe} onOpenChange={onOpenChange}>
       <DialogContent
@@ -95,12 +99,24 @@ export function RecipeDetailDialog({ recipe, onOpenChange }: RecipeDetailDialogP
                 </ol>
               </div>
 
-              <DialogClose asChild>
-                <Button className="w-full bg-green-600 hover:bg-green-700" type="button">
-                  Close
+              <div className="flex gap-3">
+                <DialogClose asChild>
+                  <Button className="flex-1" type="button" variant="outline">
+                    Close
+                  </Button>
+                </DialogClose>
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  type="button"
+                  onClick={() => setCookOpen(true)}
+                >
+                  <ChefHat aria-hidden="true" className="size-4" />
+                  Cook
                 </Button>
-              </DialogClose>
+              </div>
             </div>
+
+            <CookRecipeDialog open={cookOpen} recipe={recipe} onOpenChange={setCookOpen} />
           </>
         ) : null}
       </DialogContent>
