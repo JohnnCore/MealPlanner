@@ -16,11 +16,12 @@ import { unwrapAction } from '@/utils/action';
 
 /* ---------------------- query ---------------------- */
 
-export function usePantryItems(initialItems?: PantryItemDTO[]) {
+export function usePantryItems(initialItems?: PantryItemDTO[], options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.pantry.items(),
     queryFn: fetchPantryItems,
     initialData: initialItems,
+    enabled: options?.enabled ?? true,
   });
 }
 

@@ -9,6 +9,14 @@ export async function getRecipesByAuthorId(authorId: string) {
   });
 }
 
+/** Ownership-scoped lookup for a single recipe — used by the "cook" flow to consume pantry stock. */
+export async function getRecipeByIdAndAuthor(id: string, authorId: string) {
+  return prisma.recipe.findFirst({
+    where: { id, authorId, deletedAt: null },
+    include: { ingredients: true },
+  });
+}
+
 type RecipeWithIngredients = Awaited<ReturnType<typeof getRecipesByAuthorId>>[number];
 
 /** Shared shaping used by the recipes page's Server Component and the generate action. */
@@ -23,6 +31,7 @@ export function toRecipeDTO(recipe: RecipeWithIngredients): RecipeDTO {
     difficulty: recipe.difficulty,
     isAIGenerated: recipe.isAIGenerated,
     ingredients: recipe.ingredients.map(ri => ({
+      ingredientId: ri.ingredientId,
       name: ri.ingredient.name,
       quantity: ri.quantity,
       unit: ri.unit,
