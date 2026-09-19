@@ -66,11 +66,18 @@ function resultSummary({ consumedCount, skippedCount }: CookRecipeResultDTO): st
 
 interface CookRecipeDialogProps {
   recipe: RecipeDTO;
+  /** Set when cooking a planned meal from the Meal Planner, so it gets marked as cooked. */
+  mealPlanId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CookRecipeDialog({ recipe, open, onOpenChange }: CookRecipeDialogProps) {
+export function CookRecipeDialog({
+  recipe,
+  mealPlanId,
+  open,
+  onOpenChange,
+}: CookRecipeDialogProps) {
   // Only fetches while the dialog is actually open — no reason to hit /api/pantry/items
   // just because a recipe's detail dialog is showing.
   const { data: pantryItems, isLoading } = usePantryItems(undefined, { enabled: open });
@@ -110,7 +117,7 @@ export function CookRecipeDialog({ recipe, open, onOpenChange }: CookRecipeDialo
 
   const handleConfirm = () => {
     cookRecipe.mutate(
-      { recipeId: recipe.id, substitutions: selectedMatches },
+      { recipeId: recipe.id, substitutions: selectedMatches, mealPlanId },
       { onSuccess: setResult },
     );
   };

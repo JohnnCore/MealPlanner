@@ -70,6 +70,12 @@ enum AIGenerationType {
   SHOPPING_OPTIMIZATION
 }
 
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
 enum CategoryColor {
   GREEN
   BLUE
@@ -262,14 +268,17 @@ model MealPlan {
   userId    String
   recipeId  String
 
-  date      DateTime
+  date      DateTime @db.Date
+  mealType  MealType
   servings  Int
+  cookedAt  DateTime?
 
   createdAt DateTime @default(now())
 
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe    Recipe @relation(fields: [recipeId], references: [id])
 
+  @@unique([userId, date, mealType])
   @@index([userId, date])
 }
 

@@ -24,4 +24,11 @@ export const queryKeys = {
     all: ['ingredients'] as const,
     search: (query: string) => [...queryKeys.ingredients.all, 'search', query] as const,
   },
+
+  /* -- Meal Plan -- */
+  mealPlan: {
+    all: ['mealPlan'] as const,
+    range: (startKey: string, endKey: string) =>
+      [...queryKeys.mealPlan.all, 'range', startKey, endKey] as const,
+  },
 } as const;

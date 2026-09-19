@@ -18,10 +18,10 @@ export function useGenerateRecipe() {
 }
 
 /**
- * Marks a recipe as cooked. This mutates pantry rows server-side, not the recipe itself,
- * so on success it invalidates the pantry items query rather than any recipes cache.
- * No `successMessage` — `CookRecipeDialog` shows a detailed consumed/skipped breakdown
- * inline once this resolves, so a generic toast on top of it would just be noise.
+ * Marks a recipe as cooked. This mutates pantry rows server-side and, when started from
+ * the Meal Planner, marks the planned meal cooked — so on success it invalidates both caches. No `successMessage` —
+ * `CookRecipeDialog` shows a detailed consumed/skipped breakdown inline once this
+ * resolves, so a generic toast on top of it would just be noise.
  */
 export function useCookRecipe() {
   const qc = useQueryClient();
@@ -30,14 +30,18 @@ export function useCookRecipe() {
     mutationFn: ({
       recipeId,
       substitutions,
+      mealPlanId,
     }: {
       recipeId: string;
       /** Recipe ingredient id -> pantry ingredient id, for confirmed "possible match" picks. */
       substitutions?: Record<string, string>;
-    }) => unwrapAction(cookRecipeAction(recipeId, substitutions)),
+      /** The planned meal being cooked, when started from the Meal Planner. */
+      mealPlanId?: string;
+    }) => unwrapAction(cookRecipeAction(recipeId, substitutions, mealPlanId)),
     meta: { errorMessage: 'Failed to update pantry' },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.pantry.items() });
+      void qc.invalidateQueries({ queryKey: queryKeys.mealPlan.all });
     },
   });
 }
