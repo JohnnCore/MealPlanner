@@ -21,10 +21,19 @@ import { cardGradientFor } from '@/utils/recipe';
 
 interface RecipeDetailDialogProps {
   recipe: RecipeDTO | null;
+  /** Set when opened from a planned meal in the Meal Planner, so cooking marks that meal as cooked. */
+  mealPlanId?: string;
+  /** The planned meal was already cooked — the Cook button is disabled. */
+  cooked?: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function RecipeDetailDialog({ recipe, onOpenChange }: RecipeDetailDialogProps) {
+export function RecipeDetailDialog({
+  recipe,
+  mealPlanId,
+  cooked = false,
+  onOpenChange,
+}: RecipeDetailDialogProps) {
   const [cookOpen, setCookOpen] = useState(false);
 
   return (
@@ -107,16 +116,22 @@ export function RecipeDetailDialog({ recipe, onOpenChange }: RecipeDetailDialogP
                 </DialogClose>
                 <Button
                   className="flex-1 bg-green-600 hover:bg-green-700"
+                  disabled={cooked}
                   type="button"
                   onClick={() => setCookOpen(true)}
                 >
                   <ChefHat aria-hidden="true" className="size-4" />
-                  Cook
+                  {cooked ? 'Cooked' : 'Cook'}
                 </Button>
               </div>
             </div>
 
-            <CookRecipeDialog open={cookOpen} recipe={recipe} onOpenChange={setCookOpen} />
+            <CookRecipeDialog
+              mealPlanId={mealPlanId}
+              open={cookOpen}
+              recipe={recipe}
+              onOpenChange={setCookOpen}
+            />
           </>
         ) : null}
       </DialogContent>

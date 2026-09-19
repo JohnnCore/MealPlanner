@@ -3,6 +3,7 @@
 import { requireUserId } from '@/lib/auth-server';
 import { generateRecipeSchema } from '@/lib/schemas/recipes';
 import { AIGenerationError } from '@/services/ai';
+import { assertMealPlanCookable, markMealCooked, MealPlanError } from '@/services/mealPlan';
 import { consumeRecipeIngredients, PantryError } from '@/services/pantry';
 import { generateAndSaveRecipe } from '@/services/recipeGenerator';
 import type { ActionResult } from '@/types/action';
@@ -27,18 +28,22 @@ export async function generateRecipeAction(input: unknown): Promise<ActionResult
  * Marks a recipe as cooked, consuming its ingredients from the pantry — see
  * `services/pantry.ts`. `substitutions` (recipe ingredient id -> pantry ingredient id)
  * carries the user's picks from any "possible match" they confirmed in `CookRecipeDialog`.
+ * When cooked from the Meal Planner, `mealPlanId` also marks that planned meal as cooked.
  */
 export async function cookRecipeAction(
   recipeId: string,
   substitutions: Record<string, string> = {},
+  mealPlanId?: string,
 ): Promise<ActionResult<CookRecipeResultDTO>> {
   const userId = await requireUserId();
 
   try {
+    if (mealPlanId) await assertMealPlanCookable(userId, mealPlanId, recipeId);
     const data = await consumeRecipeIngredients(userId, recipeId, substitutions);
+    if (mealPlanId) await markMealCooked(userId, mealPlanId);
     return { success: true, data };
   } catch (e) {
-    if (e instanceof PantryError) return { error: e.message };
+    if (e instanceof PantryError || e instanceof MealPlanError) return { error: e.message };
     throw e;
   }
 }
