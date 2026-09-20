@@ -1,9 +1,10 @@
 'use client';
 
-import { ChefHat, Clock, Users } from 'lucide-react';
+import { ChefHat, Clock, ShoppingCart, Users } from 'lucide-react';
 import { useState } from 'react';
 
 import { CookRecipeDialog } from '@/components/recipes/CookRecipeDialog';
+import { ShoppingListFromRecipeDialog } from '@/components/recipes/ShoppingListFromRecipeDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +36,7 @@ export function RecipeDetailDialog({
   onOpenChange,
 }: RecipeDetailDialogProps) {
   const [cookOpen, setCookOpen] = useState(false);
+  const [shoppingOpen, setShoppingOpen] = useState(false);
 
   return (
     <Dialog open={!!recipe} onOpenChange={onOpenChange}>
@@ -115,6 +117,15 @@ export function RecipeDetailDialog({
                   </Button>
                 </DialogClose>
                 <Button
+                  className="flex-1"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShoppingOpen(true)}
+                >
+                  <ShoppingCart aria-hidden="true" className="size-4" />
+                  Shopping list
+                </Button>
+                <Button
                   className="flex-1 bg-green-600 hover:bg-green-700"
                   disabled={cooked}
                   type="button"
@@ -131,6 +142,11 @@ export function RecipeDetailDialog({
               open={cookOpen}
               recipe={recipe}
               onOpenChange={setCookOpen}
+            />
+            <ShoppingListFromRecipeDialog
+              open={shoppingOpen}
+              recipe={recipe}
+              onOpenChange={setShoppingOpen}
             />
           </>
         ) : null}

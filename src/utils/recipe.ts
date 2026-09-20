@@ -147,3 +147,27 @@ export function suggestedShoppingQuantity(item: RecipeIngredientAvailability): n
   }
   return item.requiredQuantity;
 }
+
+/**
+ * Decides which recipe lines end up on a new shopping list. AVAILABLE lines are skipped;
+ * INSUFFICIENT ones are added for the shortfall (already converted into the recipe's
+ * unit); MISSING ones for the full amount. A `POSSIBLE_MATCH` line is added in full
+ * unless the user confirmed one of its candidates as "I already have it"
+ * (`ownedCandidateIngredientIds`), in which case it's dropped like an AVAILABLE line.
+ */
+export function getShoppingLines(
+  availability: RecipeIngredientAvailability[],
+  ownedCandidateIngredientIds: ReadonlySet<string> = new Set(),
+): Array<{ ingredientId: string; name: string; quantity: number; unit: UnitType }> {
+  return availability.flatMap(item => {
+    if (item.status === 'AVAILABLE') return [];
+    if (item.status === 'POSSIBLE_MATCH' && ownedCandidateIngredientIds.has(item.ingredientId)) {
+      return [];
+    }
+
+    const quantity = suggestedShoppingQuantity(item);
+    if (quantity <= 0) return [];
+
+    return [{ ingredientId: item.ingredientId, name: item.name, quantity, unit: item.unit }];
+  });
+}

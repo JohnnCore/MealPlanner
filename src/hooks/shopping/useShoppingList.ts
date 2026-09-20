@@ -3,12 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   cloneListAction,
   createListAction,
+  createListFromRecipeAction,
   deleteListAction,
   updateListAction,
 } from '@/actions/shopping/actions';
 import { queryKeys } from '@/constants/queryKeys';
 import { fetchShoppingLists } from '@/lib/api/shopping';
 import type {
+  CreateListFromRecipePayload,
   CreateListPayload,
   ShoppingListSummaryDTO,
   UpdateListPayload,
@@ -69,6 +71,23 @@ export function useCreateList() {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prevLists) qc.setQueryData(queryKeys.shopping.lists(), ctx.prevLists);
+    },
+  });
+}
+
+/** Creates a new list from a recipe's shortfall — see `services/shopping.ts`'s `createListFromRecipe`. */
+export function useCreateListFromRecipe() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateListFromRecipePayload) =>
+      unwrapAction(createListFromRecipeAction(payload)),
+    meta: {
+      successMessage: 'Shopping list created',
+      errorMessage: 'Failed to create shopping list',
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.shopping.lists() });
     },
   });
 }

@@ -87,6 +87,14 @@ export interface UpdateItemPayload {
   checked?: boolean;
 }
 
+export interface CreateListFromRecipePayload {
+  recipeId: string;
+  categoryId: string;
+  name?: string;
+  /** Recipe ingredient ids whose "possible match" the user confirmed they already have. */
+  ownedIngredientIds: string[];
+}
+
 /* -- Aggregated data for the shopping list page -- */
 
 export interface ShoppingListData {

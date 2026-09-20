@@ -67,3 +67,15 @@ export const updateItemSchema = z.object({
 });
 
 export type UpdateItemInput = z.infer<typeof updateItemSchema>;
+
+/* -- List from recipe -- */
+
+export const createListFromRecipeSchema = z.object({
+  recipeId: z.string().min(1, 'Recipe is required'),
+  categoryId: z.string().min(1, 'Category is required'),
+  name: z.string().trim().min(1).optional(),
+  /** Recipe ingredient ids whose "possible match" the user confirmed they already have. */
+  ownedIngredientIds: z.array(z.string().min(1)).default([]),
+});
+
+export type CreateListFromRecipeInput = z.infer<typeof createListFromRecipeSchema>;

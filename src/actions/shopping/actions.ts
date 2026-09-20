@@ -4,6 +4,7 @@ import { requireUserId } from '@/lib/auth-server';
 import {
   createCategorySchema,
   createItemSchema,
+  createListFromRecipeSchema,
   createListSchema,
   updateCategorySchema,
   updateItemSchema,
@@ -27,6 +28,7 @@ import { getShoppingListByIdAndOwner } from '@/server/shopping/queries/list';
 import {
   addShoppingItem,
   completeCheckedItems,
+  createListFromRecipe,
   resolveList,
   ShoppingError,
   toItemDTO,
@@ -74,6 +76,25 @@ export async function createListAction(
       },
     };
   } catch (e) {
+    if (e instanceof Error && e.message === 'USER_NOT_FOUND') {
+      return { error: 'User not found. Please log out and sign in again.' };
+    }
+    throw e;
+  }
+}
+
+export async function createListFromRecipeAction(
+  input: unknown,
+): Promise<ActionResult<ShoppingListSummaryDTO>> {
+  const userId = await requireUserId();
+
+  const parsed = createListFromRecipeSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid list data' };
+
+  try {
+    return { success: true, data: await createListFromRecipe(userId, parsed.data) };
+  } catch (e) {
+    if (e instanceof ShoppingError) return { error: e.message };
     if (e instanceof Error && e.message === 'USER_NOT_FOUND') {
       return { error: 'User not found. Please log out and sign in again.' };
     }

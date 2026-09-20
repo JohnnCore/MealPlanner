@@ -9,11 +9,11 @@ export async function getRecipesByAuthorId(authorId: string) {
   });
 }
 
-/** Ownership-scoped lookup for a single recipe — used by the "cook" flow to consume pantry stock. */
+/** Ownership-scoped lookup for a single recipe — used by the "cook" flow and the shopping-list-from-recipe flow. */
 export async function getRecipeByIdAndAuthor(id: string, authorId: string) {
   return prisma.recipe.findFirst({
     where: { id, authorId, deletedAt: null },
-    include: { ingredients: true },
+    include: { ingredients: { include: { ingredient: true } } },
   });
 }
 
