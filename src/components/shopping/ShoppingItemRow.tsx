@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { UNIT_DISPLAY } from '@/constants/unit';
@@ -8,10 +8,11 @@ import type { ShoppingListItemDTO } from '@/types/shopping';
 interface ShoppingItemRowProps {
   item: ShoppingListItemDTO;
   onToggle: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }
 
-export function ShoppingItemRow({ item, onToggle, onDelete }: ShoppingItemRowProps) {
+export function ShoppingItemRow({ item, onToggle, onEdit, onDelete }: ShoppingItemRowProps) {
   const unitLabel = UNIT_DISPLAY[item.unit] ?? item.unit;
 
   return (
@@ -46,7 +47,16 @@ export function ShoppingItemRow({ item, onToggle, onDelete }: ShoppingItemRowPro
         </div>
       </div>
       <button
-        className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+        aria-label={`Edit ${item.name}`}
+        className="text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+        type="button"
+        onClick={onEdit}
+      >
+        <Pencil className="size-4" />
+      </button>
+      <button
+        aria-label={`Remove ${item.name}`}
+        className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
         type="button"
         onClick={onDelete}
       >

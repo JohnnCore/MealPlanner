@@ -10,6 +10,7 @@ interface CategoryCardProps {
   category: ShoppingCategoryDTO;
   items: ShoppingListItemDTO[];
   onToggleItem: (item: ShoppingListItemDTO) => void;
+  onEditItem: (item: ShoppingListItemDTO) => void;
   onDeleteItem: (itemId: string) => void;
   onEditCategory: (cat: ShoppingCategoryDTO) => void;
 }
@@ -18,6 +19,7 @@ export function CategoryCard({
   category,
   items,
   onToggleItem,
+  onEditItem,
   onDeleteItem,
   onEditCategory,
 }: CategoryCardProps) {
@@ -63,6 +65,7 @@ export function CategoryCard({
             key={item.id}
             item={item}
             onDelete={() => onDeleteItem(item.id)}
+            onEdit={() => onEditItem(item)}
             onToggle={() => onToggleItem(item)}
           />
         ))}

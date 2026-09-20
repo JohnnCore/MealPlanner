@@ -6,6 +6,7 @@ import type {
   ShoppingCategoryDTO,
   ShoppingListItemDTO,
   ShoppingListSummaryDTO,
+  UpdateItemPayload,
 } from '@/types/shopping';
 
 import { useCloneList, useShoppingLists } from './useShoppingList';
@@ -47,6 +48,7 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
   const [completeShoppingOpen, setCompleteShoppingOpen] = useState(false);
   const [editingList, setEditingList] = useState<ShoppingListSummaryDTO | null>(null);
   const [deletingList, setDeletingList] = useState<ShoppingListSummaryDTO | null>(null);
+  const [editingItem, setEditingItem] = useState<ShoppingListItemDTO | null>(null);
   const [editingCategory, setEditingCategory] = useState<ShoppingCategoryDTO | null>(null);
 
   /* -- Derived data -- */
@@ -113,6 +115,13 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
     [updateItem],
   );
 
+  const handleSaveItem = useCallback(
+    (id: string, updates: UpdateItemPayload) => {
+      updateItem.mutate({ id, ...updates }, { onSuccess: () => setEditingItem(null) });
+    },
+    [updateItem],
+  );
+
   const handleDeleteItem = useCallback(
     (itemId: string) => {
       deleteItem.mutate(itemId);
@@ -165,6 +174,8 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
     manageCategoriesOpen,
     handleManageCategoriesOpenChange,
     editingCategory,
+    editingItem,
+    setEditingItem,
     addItemOpen,
     setAddItemOpen,
     createListOpen,
@@ -177,10 +188,12 @@ export function useShoppingListPage(initialLists?: ShoppingListSummaryDTO[]) {
 
     /* actions */
     handleToggleItem,
+    handleSaveItem,
     handleDeleteItem,
     handleClearChecked,
     handleCompleteShoppingConfirmed,
     handleEditCategory,
+    isSavingItem: updateItem.isPending,
     isClearingChecked: clearChecked.isPending,
     isCompletingShopping: completeChecked.isPending,
   };
