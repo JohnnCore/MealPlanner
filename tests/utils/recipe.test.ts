@@ -5,6 +5,7 @@ import type { RecipeIngredientDTO } from '@/types/recipes';
 import {
   applyPossibleMatchSelection,
   getIngredientAvailability,
+  getShoppingLines,
   suggestedShoppingQuantity,
 } from '@/utils/recipe';
 
@@ -217,5 +218,42 @@ describe('suggestedShoppingQuantity', () => {
     );
 
     expect(suggestedShoppingQuantity(result)).toBe(4);
+  });
+});
+
+describe('getShoppingLines', () => {
+  const availability = getIngredientAvailability(
+    [
+      recipeIngredient({ ingredientId: 'flour', name: 'Flour', quantity: 500, unit: 'GRAM' }),
+      recipeIngredient({ ingredientId: 'sugar', name: 'Sugar', quantity: 1, unit: 'KILOGRAM' }),
+      recipeIngredient({ ingredientId: 'egg', name: 'Egg', quantity: 2, unit: 'PIECE' }),
+      recipeIngredient({ ingredientId: 'rice', name: 'White rice', quantity: 300, unit: 'GRAM' }),
+    ],
+    [
+      pantryItem({ ingredientId: 'flour', quantity: 1, unit: 'KILOGRAM', name: 'Flour' }),
+      pantryItem({ ingredientId: 'sugar', quantity: 400, unit: 'GRAM', name: 'Sugar' }),
+      pantryItem({ ingredientId: 'plain-rice', quantity: 1, unit: 'KILOGRAM', name: 'Rice' }),
+    ],
+  );
+
+  it('skips what is covered (across units), buys shortfalls converted, and missing in full', () => {
+    const lines = getShoppingLines(availability);
+
+    expect(lines.map(l => l.ingredientId)).toEqual(['sugar', 'egg', 'rice']);
+    expect(lines[0]).toMatchObject({ quantity: 0.6, unit: 'KILOGRAM' });
+    expect(lines[1]).toMatchObject({ quantity: 2, unit: 'PIECE' });
+  });
+
+  it('treats an unconfirmed possible match as missing, and a confirmed one as owned', () => {
+    expect(getShoppingLines(availability).some(l => l.ingredientId === 'rice')).toBe(true);
+    expect(
+      getShoppingLines(availability, new Set(['rice'])).some(l => l.ingredientId === 'rice'),
+    ).toBe(false);
+  });
+
+  it('ignores an owned id that is not a possible match', () => {
+    const lines = getShoppingLines(availability, new Set(['egg']));
+
+    expect(lines.some(l => l.ingredientId === 'egg')).toBe(true);
   });
 });
