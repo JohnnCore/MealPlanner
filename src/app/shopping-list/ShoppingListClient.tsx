@@ -7,6 +7,7 @@ import { CategoryCard } from '@/components/shopping/CategoryCard';
 import { CompleteShoppingDialog } from '@/components/shopping/CompleteShoppingDialog';
 import { CreateListDialog } from '@/components/shopping/CreateListDialog';
 import { DeleteListDialog } from '@/components/shopping/DeleteListDialog';
+import { EditItemDialog } from '@/components/shopping/EditItemDialog';
 import { ManageCategoriesDialog } from '@/components/shopping/ManageCategoriesDialog';
 import { ShoppingListSelector } from '@/components/shopping/ShoppingListSelector';
 import { ShoppingListSkeleton } from '@/components/shopping/ShoppingListSkeleton';
@@ -26,6 +27,7 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
     handleCloneList,
     handleDeleteListRequest,
     handleDeleteListConfirmed,
+    categories,
     activeCategories,
     itemsByCategory,
     totalItems,
@@ -34,6 +36,8 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
     manageCategoriesOpen,
     handleManageCategoriesOpenChange,
     editingCategory,
+    editingItem,
+    setEditingItem,
     addItemOpen,
     setAddItemOpen,
     createListOpen,
@@ -45,10 +49,12 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
     completeShoppingOpen,
     setCompleteShoppingOpen,
     handleToggleItem,
+    handleSaveItem,
     handleDeleteItem,
     handleClearChecked,
     handleCompleteShoppingConfirmed,
     handleEditCategory,
+    isSavingItem,
     isClearingChecked,
     isCompletingShopping,
   } = useShoppingListPage(initialLists);
@@ -176,6 +182,7 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
                 items={itemsByCategory.get(cat.id) ?? []}
                 onDeleteItem={handleDeleteItem}
                 onEditCategory={handleEditCategory}
+                onEditItem={setEditingItem}
                 onToggleItem={handleToggleItem}
               />
             ))}
@@ -191,6 +198,15 @@ export function ShoppingListClient({ initialLists }: { initialLists: ShoppingLis
         onOpenChange={handleManageCategoriesOpenChange}
       />
       <AddItemDialog listId={activeListId} open={addItemOpen} onOpenChange={setAddItemOpen} />
+      <EditItemDialog
+        categories={categories}
+        isPending={isSavingItem}
+        item={editingItem}
+        onOpenChange={open => {
+          if (!open) setEditingItem(null);
+        }}
+        onSave={handleSaveItem}
+      />
       <CreateListDialog
         editList={editingList}
         open={createListOpen}
