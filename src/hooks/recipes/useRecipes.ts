@@ -1,8 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { cookRecipeAction, generateRecipeAction } from '@/actions/recipes/actions';
+import {
+  cloneRecipeAction,
+  cookRecipeAction,
+  createRecipeAction,
+  deleteRecipeAction,
+  generateRecipeAction,
+  updateRecipeAction,
+} from '@/actions/recipes/actions';
 import { queryKeys } from '@/constants/queryKeys';
-import type { GenerateRecipeInput } from '@/lib/schemas/recipes';
+import type { GenerateRecipeInput, SaveRecipeInput } from '@/lib/schemas/recipes';
 import { unwrapAction } from '@/utils/action';
 
 /**
@@ -43,5 +50,40 @@ export function useCookRecipe() {
       void qc.invalidateQueries({ queryKey: queryKeys.pantry.items() });
       void qc.invalidateQueries({ queryKey: queryKeys.mealPlan.all });
     },
+  });
+}
+
+export function useCreateRecipe() {
+  return useMutation({
+    mutationFn: (values: SaveRecipeInput) => unwrapAction(createRecipeAction(values)),
+    meta: { successMessage: 'Recipe created', errorMessage: 'Failed to create recipe' },
+  });
+}
+
+export function useUpdateRecipe() {
+  return useMutation({
+    mutationFn: ({ recipeId, values }: { recipeId: string; values: SaveRecipeInput }) =>
+      unwrapAction(updateRecipeAction(recipeId, values)),
+    meta: { successMessage: 'Recipe updated', errorMessage: 'Failed to update recipe' },
+  });
+}
+
+/** Also invalidates the meal plan cache — deleting a recipe removes its upcoming planned meals. */
+export function useDeleteRecipe() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (recipeId: string) => unwrapAction(deleteRecipeAction(recipeId)),
+    meta: { successMessage: 'Recipe deleted', errorMessage: 'Failed to delete recipe' },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.mealPlan.all });
+    },
+  });
+}
+
+export function useCloneRecipe() {
+  return useMutation({
+    mutationFn: (recipeId: string) => unwrapAction(cloneRecipeAction(recipeId)),
+    meta: { successMessage: 'Recipe cloned', errorMessage: 'Failed to clone recipe' },
   });
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { generateRecipeSchema } from '@/lib/schemas/recipes';
+import { generateRecipeSchema, saveRecipeSchema } from '@/lib/schemas/recipes';
 
 describe('generateRecipeSchema', () => {
   it('accepts a valid prompt with no servings override', () => {
@@ -61,5 +61,49 @@ describe('generateRecipeSchema', () => {
   it('rejects a non-string prompt', () => {
     const result = generateRecipeSchema.safeParse({ prompt: 123 });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('saveRecipeSchema', () => {
+  const valid = {
+    title: '  Tomato soup ',
+    servings: 2,
+    cookTimeMinutes: 25,
+    difficulty: 'EASY',
+    ingredients: [
+      { ingredientId: 'abc', quantity: 400, unit: 'GRAM' },
+      { name: 'Basil', category: 'SPICE', quantity: 1, unit: 'TABLESPOON' },
+    ],
+    instructions: ['Chop', ' Simmer '],
+  };
+
+  it('accepts a recipe mixing existing and new ingredients, trimming text', () => {
+    const result = saveRecipeSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+    expect(result.data?.title).toBe('Tomato soup');
+    expect(result.data?.instructions).toEqual(['Chop', 'Simmer']);
+  });
+
+  it('requires at least one ingredient and one step', () => {
+    expect(saveRecipeSchema.safeParse({ ...valid, ingredients: [] }).success).toBe(false);
+    expect(saveRecipeSchema.safeParse({ ...valid, instructions: [] }).success).toBe(false);
+  });
+
+  it('rejects a blank step and a non-positive quantity', () => {
+    expect(saveRecipeSchema.safeParse({ ...valid, instructions: ['  '] }).success).toBe(false);
+    const zero = [{ ingredientId: 'abc', quantity: 0, unit: 'GRAM' }];
+    expect(saveRecipeSchema.safeParse({ ...valid, ingredients: zero }).success).toBe(false);
+  });
+
+  it('rejects an ingredient line that is neither an id nor a name + category', () => {
+    const line = [{ name: 'Basil', quantity: 1, unit: 'GRAM' }];
+    expect(saveRecipeSchema.safeParse({ ...valid, ingredients: line }).success).toBe(false);
+  });
+
+  it('rejects an ingredient line that gives both an id and new-ingredient details', () => {
+    const line = [
+      { ingredientId: 'abc', name: 'Basil', category: 'SPICE', quantity: 1, unit: 'GRAM' },
+    ];
+    expect(saveRecipeSchema.safeParse({ ...valid, ingredients: line }).success).toBe(false);
   });
 });

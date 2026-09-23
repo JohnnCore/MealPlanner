@@ -4,6 +4,7 @@ import { ChefHat, Clock, ShoppingCart, Users } from 'lucide-react';
 import { useState } from 'react';
 
 import { CookRecipeDialog } from '@/components/recipes/CookRecipeDialog';
+import { RecipeActionsMenu } from '@/components/recipes/RecipeActionsMenu';
 import { ShoppingListFromRecipeDialog } from '@/components/recipes/ShoppingListFromRecipeDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,10 @@ interface RecipeDetailDialogProps {
   mealPlanId?: string;
   /** The planned meal was already cooked — the Cook button is disabled. */
   cooked?: boolean;
+  /** When all three are provided, an actions menu (edit / clone / delete) is shown in the banner. */
+  onEdit?: (recipe: RecipeDTO) => void;
+  onClone?: (recipe: RecipeDTO) => void;
+  onDelete?: (recipe: RecipeDTO) => void;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -33,6 +38,9 @@ export function RecipeDetailDialog({
   recipe,
   mealPlanId,
   cooked = false,
+  onEdit,
+  onClone,
+  onDelete,
   onOpenChange,
 }: RecipeDetailDialogProps) {
   const [cookOpen, setCookOpen] = useState(false);
@@ -56,6 +64,15 @@ export function RecipeDetailDialog({
               >
                 <ChefHat aria-hidden="true" className="size-16 text-white/90" />
               </div>
+              {onEdit && onClone && onDelete ? (
+                <RecipeActionsMenu
+                  className="absolute top-4 left-4"
+                  recipe={recipe}
+                  onClone={onClone}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                />
+              ) : null}
               <Badge
                 className={cn(
                   'absolute top-4 right-4 px-3 py-1 text-sm font-semibold',
