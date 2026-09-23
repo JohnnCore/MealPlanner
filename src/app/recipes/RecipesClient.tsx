@@ -1,10 +1,12 @@
 'use client';
 
-import { ChefHat, Sparkles } from 'lucide-react';
+import { ChefHat, PenLine, Sparkles } from 'lucide-react';
 
+import { DeleteRecipeDialog } from '@/components/recipes/DeleteRecipeDialog';
 import { GenerateRecipeDialog } from '@/components/recipes/GenerateRecipeDialog';
 import { RecipeCard } from '@/components/recipes/RecipeCard';
 import { RecipeDetailDialog } from '@/components/recipes/RecipeDetailDialog';
+import { RecipeFormDialog } from '@/components/recipes/RecipeFormDialog';
 import { Button } from '@/components/ui/button';
 import { DIFFICULTIES, DIFFICULTY_LABELS } from '@/constants/recipe';
 import { useRecipesPage } from '@/hooks/recipes/useRecipesPage';
@@ -28,6 +30,15 @@ export function RecipesClient({ initialRecipes, dietarySummary }: RecipesClientP
     selectedRecipe,
     setSelectedRecipe,
     recipes,
+    formTarget,
+    setFormTarget,
+    handleSave,
+    isSaving,
+    handleDelete,
+    isDeleting,
+    handleClone,
+    recipeToDelete,
+    setRecipeToDelete,
   } = useRecipesPage(initialRecipes);
 
   const filters: Array<'All' | RecipeDTO['difficulty']> = ['All', ...DIFFICULTIES];
@@ -41,20 +52,26 @@ export function RecipesClient({ initialRecipes, dietarySummary }: RecipesClientP
             <Sparkles aria-hidden="true" className="size-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">AI Recipe Suggestions</h1>
+            <h1 className="text-2xl font-bold">Recipes</h1>
             <p className="text-sm text-muted-foreground">
-              Describe what you want to cook and let AI build the recipe
+              Write your own, or describe what you want to cook and let AI build it
             </p>
           </div>
         </div>
-        <Button
-          className="bg-green-600 hover:bg-green-700"
-          type="button"
-          onClick={() => setGenerateOpen(true)}
-        >
-          <Sparkles aria-hidden="true" className="size-4" />
-          Generate Recipe
-        </Button>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={() => setFormTarget('new')}>
+            <PenLine aria-hidden="true" className="size-4" />
+            New Recipe
+          </Button>
+          <Button
+            className="bg-green-600 hover:bg-green-700"
+            type="button"
+            onClick={() => setGenerateOpen(true)}
+          >
+            <Sparkles aria-hidden="true" className="size-4" />
+            Generate Recipe
+          </Button>
+        </div>
       </div>
 
       {/* -- Filters -- */}
@@ -84,13 +101,20 @@ export function RecipesClient({ initialRecipes, dietarySummary }: RecipesClientP
           <ChefHat aria-hidden="true" className="size-10 text-muted-foreground" />
           <p className="text-lg font-medium text-muted-foreground">No recipes yet</p>
           <p className="text-sm text-muted-foreground">
-            Generate your first AI recipe to get started!
+            Write your own recipe or generate one with AI to get started!
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredRecipes.map(recipe => (
-            <RecipeCard key={recipe.id} recipe={recipe} onClick={() => setSelectedRecipe(recipe)} />
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onClick={() => setSelectedRecipe(recipe)}
+              onClone={handleClone}
+              onDelete={setRecipeToDelete}
+              onEdit={setFormTarget}
+            />
           ))}
         </div>
       )}
@@ -102,8 +126,33 @@ export function RecipesClient({ initialRecipes, dietarySummary }: RecipesClientP
         onGenerate={handleGenerate}
         onOpenChange={setGenerateOpen}
       />
+      {formTarget ? (
+        <RecipeFormDialog
+          key={formTarget === 'new' ? 'new' : formTarget.id}
+          open
+          defaultServings={dietarySummary.defaultServings}
+          isSaving={isSaving}
+          recipe={formTarget === 'new' ? null : formTarget}
+          onOpenChange={open => {
+            if (!open) setFormTarget(null);
+          }}
+          onSave={handleSave}
+        />
+      ) : null}
+      <DeleteRecipeDialog
+        isDeleting={isDeleting}
+        open={!!recipeToDelete}
+        recipe={recipeToDelete}
+        onConfirm={handleDelete}
+        onOpenChange={open => {
+          if (!open) setRecipeToDelete(null);
+        }}
+      />
       <RecipeDetailDialog
         recipe={selectedRecipe}
+        onClone={handleClone}
+        onDelete={setRecipeToDelete}
+        onEdit={setFormTarget}
         onOpenChange={open => {
           if (!open) setSelectedRecipe(null);
         }}

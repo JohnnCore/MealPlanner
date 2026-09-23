@@ -1,11 +1,19 @@
 'use server';
 
 import { requireUserId } from '@/lib/auth-server';
-import { generateRecipeSchema } from '@/lib/schemas/recipes';
+import { generateRecipeSchema, saveRecipeSchema } from '@/lib/schemas/recipes';
 import { AIGenerationError } from '@/services/ai';
+import { IngredientResolutionError } from '@/services/ingredients';
 import { assertMealPlanCookable, markMealCooked, MealPlanError } from '@/services/mealPlan';
 import { consumeRecipeIngredients, PantryError } from '@/services/pantry';
 import { generateAndSaveRecipe } from '@/services/recipeGenerator';
+import {
+  cloneUserRecipe,
+  createUserRecipe,
+  deleteUserRecipe,
+  RecipeError,
+  updateUserRecipe,
+} from '@/services/recipes';
 import type { ActionResult } from '@/types/action';
 import type { CookRecipeResultDTO, RecipeDTO } from '@/types/recipes';
 
@@ -44,6 +52,66 @@ export async function cookRecipeAction(
     return { success: true, data };
   } catch (e) {
     if (e instanceof PantryError || e instanceof MealPlanError) return { error: e.message };
+    throw e;
+  }
+}
+
+export async function createRecipeAction(input: unknown): Promise<ActionResult<RecipeDTO>> {
+  const userId = await requireUserId();
+
+  const parsed = saveRecipeSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid recipe' };
+
+  try {
+    return { success: true, data: await createUserRecipe(userId, parsed.data) };
+  } catch (e) {
+    if (e instanceof RecipeError || e instanceof IngredientResolutionError) {
+      return { error: e.message };
+    }
+    throw e;
+  }
+}
+
+/** Edits any recipe the user owns — hand-written or AI-generated. */
+export async function updateRecipeAction(
+  recipeId: string,
+  input: unknown,
+): Promise<ActionResult<RecipeDTO>> {
+  const userId = await requireUserId();
+
+  const parsed = saveRecipeSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid recipe' };
+
+  try {
+    return { success: true, data: await updateUserRecipe(userId, recipeId, parsed.data) };
+  } catch (e) {
+    if (e instanceof RecipeError || e instanceof IngredientResolutionError) {
+      return { error: e.message };
+    }
+    throw e;
+  }
+}
+
+/** Soft-deletes a recipe and removes it from any upcoming (uncooked) planned meals. */
+export async function deleteRecipeAction(recipeId: string): Promise<ActionResult<null>> {
+  const userId = await requireUserId();
+
+  try {
+    await deleteUserRecipe(userId, recipeId);
+    return { success: true, data: null };
+  } catch (e) {
+    if (e instanceof RecipeError) return { error: e.message };
+    throw e;
+  }
+}
+
+export async function cloneRecipeAction(recipeId: string): Promise<ActionResult<RecipeDTO>> {
+  const userId = await requireUserId();
+
+  try {
+    return { success: true, data: await cloneUserRecipe(userId, recipeId) };
+  } catch (e) {
+    if (e instanceof RecipeError) return { error: e.message };
     throw e;
   }
 }
